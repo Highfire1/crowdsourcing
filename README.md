@@ -1,3 +1,10 @@
+# Prerequisite Crowdsourcing
+
+This is a project to crowdsource parsing course prerequisites from text (ie human language) into machine readable data.
+
+This is needed because course prerequisites are written by humans, who do not follow any one standard. This task also cannot be completed by large language models due to hallucinations.
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
