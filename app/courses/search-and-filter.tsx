@@ -2,7 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+// import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -18,21 +18,21 @@ const PARSE_STATUS_OPTIONS = [
   { value: "no_parse_needed", label: "No Parse Needed" },
 ];
 
-function getStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "ai_parsed":
-    case "human_parsed_once_success":
-    case "human_parsed_twice_success":
-      return "default";
-    case "ai_parsed_failed":
-      return "destructive";
-    case "human_parsed_unclear":
-      return "secondary";
-    case "no_parse_needed":
-    default:
-      return "outline";
-  }
-}
+// function getStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {
+//   switch (status) {
+//     case "ai_parsed":
+//     case "human_parsed_once_success":
+//     case "human_parsed_twice_success":
+//       return "default";
+//     case "ai_parsed_failed":
+//       return "destructive";
+//     case "human_parsed_unclear":
+//       return "secondary";
+//     case "no_parse_needed":
+//     default:
+//       return "outline";
+//   }
+// }
 
 export function SearchAndFilter() {
   const router = useRouter();
@@ -66,7 +66,7 @@ export function SearchAndFilter() {
     }
   };
 
-  const hasActiveFilters = searchTerm || selectedStatus;
+//   const hasActiveFilters = searchTerm || selectedStatus;
 
   return (
     <div className="space-y-4">
