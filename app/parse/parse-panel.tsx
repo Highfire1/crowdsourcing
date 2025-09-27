@@ -134,7 +134,7 @@ export default function ParsePanel({ course }: Props) {
                     <CardDescription className='text-white text-md ml-4'>
                         <p>Prerequisites: {currentCourse.prerequisites || 'None'}</p>
                         <p>Corequisites: {currentCourse.corequisites || 'None.'}</p>
-                        <p>Notes: {currentCourse.notes || 'None.'}</p>
+                        <p>Notes: {currentCourse.notes + ' (skip any courses with notes for now)' || 'None.'}</p>
                     </CardDescription>
                 </CardHeader>
 

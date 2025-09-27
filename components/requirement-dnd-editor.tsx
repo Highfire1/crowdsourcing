@@ -118,7 +118,7 @@ function MainDroppableArea({ children }: { children: React.ReactNode }) {
   return (
     <div 
       ref={setNodeRef}
-      className={`flex-1 min-h-[200px] p-4 transition-colors ${isOver ? 'bg-blue-50 border-2 border-blue-200 border-dashed' : 'border-2 border-transparent'}`}
+      className={`flex-1 min-h-[200px] p-4 transition-colors ${isOver ? 'bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-700 border-dashed' : 'border-2 border-transparent'}`}
     >
       {children}
     </div>
@@ -142,20 +142,20 @@ function DroppableGroupZone({
     <div 
       ref={setNodeRef}
       className={`ml-8 mt-3 border-l-2 pl-4 min-h-[60px] rounded-r transition-colors ${
-        isOver ? 'border-blue-400 bg-blue-50' : 'border-gray-200'
+        isOver ? 'border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-950/20' : 'border-gray-200 dark:border-gray-700'
       }`}
     >
       {children}
       {/* Always show drop area, even with children */}
       <div className={`mt-2 p-3 border-2 border-dashed rounded transition-colors ${
-        isOver ? 'border-blue-400 bg-blue-100' : 'border-gray-300'
+        isOver ? 'border-blue-400 dark:border-blue-600 bg-blue-100 dark:bg-blue-950/30' : 'border-gray-300 dark:border-gray-600'
       }`}>
         {isOver ? (
-          <div className="text-sm text-blue-600 italic text-center">
+          <div className="text-sm text-blue-600 dark:text-blue-400 italic text-center">
             Drop here to add to group
           </div>
         ) : (
-          <div className="text-sm text-gray-400 italic text-center">
+          <div className="text-sm text-gray-400 dark:text-gray-500 italic text-center">
             Drop requirements here
           </div>
         )}
