@@ -16,6 +16,9 @@ export function NavHeader() {
           <Link href={"/parse"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Parse
           </Link>
+          <Link href={"/verify"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Verify
+          </Link>
           {/* <Link href={"/account"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Account
           </Link> */}
