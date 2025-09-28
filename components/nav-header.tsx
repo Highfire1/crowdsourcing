@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { EnvVarWarning } from "@/components/env-var-warning";
 import { AuthButton } from "@/components/auth-button";
-import ThemeToggle from "@/components/theme-toggle";
 import { hasEnvVars } from "@/lib/utils";
+import { ThemeSwitcher } from "./theme-switcher";
 
 export function NavHeader() {
   return (
@@ -22,7 +22,7 @@ export function NavHeader() {
         </div>
         <div className="flex items-center gap-4">
           {!hasEnvVars ? <EnvVarWarning /> : <AuthButton />}
-          <ThemeToggle />
+          <ThemeSwitcher />
         </div>
       </div>
     </nav>

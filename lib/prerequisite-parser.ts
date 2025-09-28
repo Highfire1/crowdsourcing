@@ -6,15 +6,18 @@ export interface ParsedPrerequisites {
 }
 
 /**
- * Parses prerequisite text to extract course codes and high school courses
+ * Parses prerequisite and corequisite text to extract course codes and high school courses
  */
-export function parsePrerequisiteText(text: string): ParsedPrerequisites {
+export function parsePrerequisiteText(prerequisiteText: string, corequisiteText?: string): ParsedPrerequisites {
   const courses: RequirementCourse[] = []
   const hsCourses: RequirementHSCourse[] = []
 
-  // Pattern to match university courses: 4 uppercase letters + space + 3 digits
-  const coursePattern = /\b([A-Z]{4})\s+(\d{3})\b/g
-  const courseMatches = text.matchAll(coursePattern)
+  // Combine both prerequisite and corequisite text for parsing
+  const combinedText = prerequisiteText + (corequisiteText ? ' ' + corequisiteText : '')
+
+  // Pattern to match university courses: 3-4 uppercase letters + space + 3 digits
+  const coursePattern = /\b([A-Z]{3,4})\s+(\d{3})\b/g
+  const courseMatches = combinedText.matchAll(coursePattern)
   
   const seenCourses = new Set<string>()
   
@@ -50,7 +53,7 @@ export function parsePrerequisiteText(text: string): ParsedPrerequisites {
   ]
 
   for (const { pattern, course } of hsCoursePatterns) {
-    if (pattern.test(text)) {
+    if (pattern.test(combinedText)) {
       hsCourses.push({
         type: 'HSCourse',
         course: course,

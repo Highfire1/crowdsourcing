@@ -1,17 +1,30 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
+import { createClient as createUserClient } from '@/lib/supabase/server'
 
 export async function POST(req: Request) {
   try {
     const body = await req.json()
     const { courseId, parsed, action } = body
 
-    const supabase = await createClient()
+    // Get user info from the regular client (for auth)
+    const userSupabase = await createUserClient()
+    const { data: { user }, error: userError } = await userSupabase.auth.getUser()
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    // Use service_role client for elevated permissions
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
 
     // Fetch the course by id to gather dept/number and original fields
     const { data: courseRows, error: courseErr } = await supabase
       .from('courses_sfu')
-      .select('id, dept, number, prerequisites, corequisites, notes')
+      .select('id, dept, number, prerequisites, corequisites, notes, parse_status')
       .eq('id', courseId)
       .limit(1)
 
@@ -36,6 +49,7 @@ export async function POST(req: Request) {
       parsed_prerequisites: parsed ? JSON.parse(JSON.stringify(parsed)) : null,
       parsed_corequisites: null,
       parsed_credit_conflicts: null,
+      author: user.id, // Add the user ID as the author
     }
 
     const { error: insertErr } = await supabase.from('parse_attempts').insert(insertPayload)
@@ -45,33 +59,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to insert parse_attempts', details: insertErr }, { status: 500 })
     }
 
-    // Optionally update the course parse_status when submitted
+    // Update parse_status when submitted, but only if currently ai_parsed or ai_parsed_failed
     if (action === 'submit') {
-      await supabase.from('courses_sfu').update({ parse_status: 'human_parsed_once_success' }).eq('id', courseId)
+      if (course.parse_status === 'ai_parsed' || course.parse_status === 'ai_parsed_failed') {
+        const { error: updateErr } = await supabase
+          .from('courses_sfu')
+          .update({ parse_status: 'human_parsed_once_success' })
+          .eq('id', courseId)
+
+        if (updateErr) {
+          console.error('Error updating parse_status:', updateErr)
+          return NextResponse.json({ error: 'Failed to update parse_status' }, { status: 500 })
+        }
+      }
     }
 
-    // Find next course: prefer ai_parsed then ai_parsed_failed
-    const { data: nextPref } = await supabase
-      .from('courses_sfu')
-      .select('id, dept, number, title, description, prerequisites, corequisites, notes')
-      .eq('parse_status', 'ai_parsed')
-      .order('id', { ascending: true })
-      .limit(1)
-
-    let nextCourse = nextPref && nextPref.length > 0 ? nextPref[0] : null
-
-    if (!nextCourse) {
-      const { data: nextFb } = await supabase
-        .from('courses_sfu')
-        .select('id, dept, number, title, description, prerequisites, corequisites, notes')
-        .eq('parse_status', 'ai_parsed_failed')
-        .order('id', { ascending: true })
-        .limit(1)
-
-      nextCourse = nextFb && nextFb.length > 0 ? nextFb[0] : null
-    }
-
-    return NextResponse.json({ ok: true, nextCourse })
+    return NextResponse.json({ ok: true })
   } catch (err) {
     console.error('Unexpected save error', err)
     return NextResponse.json({ error: 'Unexpected error' }, { status: 500 })

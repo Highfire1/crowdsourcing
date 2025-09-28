@@ -326,7 +326,7 @@ function RequirementForm({
                 checked={course.canBeTakenConcurrently === 'true'}
                 onChange={(e) => handleFieldChange('canBeTakenConcurrently', e.target.checked ? 'true' : undefined)}
               />
-              <span>Concurrent</span>
+              <span>Can be concurrent</span>
             </label>
             <label className="flex items-center gap-1">
               <input
@@ -516,7 +516,7 @@ function RequirementForm({
                 checked={courseCount.canBeTakenConcurrently === 'true'}
                 onChange={(e) => handleFieldChange('canBeTakenConcurrently', e.target.checked ? 'true' : undefined)}
               />
-              <span>Concurrent</span>
+              <span>Can be concurrent</span>
             </label>
           </div>
         </div>
@@ -1034,7 +1034,7 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                 </Button>
                 <Button size="sm" onClick={handleSave} disabled={!currentRequirementJSON || loading}>
                   <Save className="w-4 h-4 mr-2"/>
-                  {loading ? 'Sending...' : (submitState === 'success' ? 'Submitted!' : 'Submit')}
+                  {loading ? 'Sending...' : (submitState === 'success' ? 'Submitted! Click here for next course.' : 'Submit')}
                 </Button>
               </div>
             </div>

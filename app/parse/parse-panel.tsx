@@ -18,16 +18,15 @@ interface Props {
         corequisites?: string | null
         notes?: string | null
     }
+    onNextCourse?: () => void
 }
 
-export default function ParsePanel({ course }: Props) {
+export default function ParsePanel({ course, onNextCourse }: Props) {
     const [currentCourse, setCurrentCourse] = React.useState<typeof course | null>(course)
     const [currentParsed, setCurrentParsed] = React.useState<RequirementNode | null>(null)
     const [loading, setLoading] = React.useState(false)
     const [submitted, setSubmitted] = React.useState(false)
     const [submitState, setSubmitState] = React.useState<'idle'|'success'|'error'>('idle')
-    // nextCourseCandidate moved into local submit flow; not stored at panel level
-    const nextRef = React.useRef<typeof course | null>(null)
 
     const submit = async (parsed?: RequirementNode | null) => {
         if (!currentCourse) return
@@ -49,20 +48,13 @@ export default function ParsePanel({ course }: Props) {
                 console.warn('Save error', text || res.statusText)
                 setSubmitState('error')
             } else {
-                const body = await res.json()
-                // store nextCourse in a ref so Next can load it later
-                nextRef.current = body?.nextCourse ?? null
                 if (!submitted) {
                     setSubmitted(true)
                     setSubmitState('success')
                 } else {
-                    // user clicked Next — load candidate immediately
-                    if (nextRef.current) {
-                        setCurrentCourse(nextRef.current)
-                        setCurrentParsed(null)
-                        setSubmitted(false)
-                        nextRef.current = null
-                        setSubmitState('idle')
+                    // user clicked Next — use the parent's offset-based next course handler
+                    if (onNextCourse) {
+                        onNextCourse()
                     } else {
                         setCurrentCourse(null)
                         setSubmitState('idle')
@@ -82,26 +74,9 @@ export default function ParsePanel({ course }: Props) {
         setLoading(true)
 
         try {
-            // Just get the next course without saving anything
-            const res = await fetch('/api/parse_attempts/next', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            })
-
-            if (!res.ok) {
-                console.warn('Skip error', res.statusText)
-            } else {
-                const body = await res.json()
-                // Auto-load next course if available
-                if (body?.course) {
-                    setCurrentCourse(body.course)
-                    setCurrentParsed(null)
-                    setSubmitted(false)
-                    setSubmitState('idle')
-                } else {
-                    setCurrentCourse(null)
-                    setSubmitState('idle')
-                }
+            // Use the parent component's next course handler which manages offset
+            if (onNextCourse) {
+                onNextCourse()
             }
         } catch (err: unknown) {
             console.error('Skip error', err)
@@ -134,7 +109,7 @@ export default function ParsePanel({ course }: Props) {
                     <CardDescription className='text-white text-md ml-4'>
                         <p>Prerequisites: {currentCourse.prerequisites || 'None'}</p>
                         <p>Corequisites: {currentCourse.corequisites || 'None.'}</p>
-                        <p>Notes: {currentCourse.notes + ' (skip any courses with notes for now)' || 'None.'}</p>
+                        <p>Notes: {currentCourse.notes || 'None.'}</p>
                     </CardDescription>
                 </CardHeader>
 
