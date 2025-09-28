@@ -14,8 +14,9 @@ const PARSE_STATUS_OPTIONS = [
   { value: "human_parsed_once_success", label: "Human Parsed (Once)" },
   { value: "human_parsed_unclear", label: "Human Parsed (Unclear)" },
   { value: "human_parsed_twice_success", label: "Human Parsed (Twice)" },
-  { value: "null", label: "Not Parsed" },
+  { value: "human_verified", label: "Human Verified" },
   { value: "no_parse_needed", label: "No Parse Needed" },
+  { value: "null", label: "Not Parsed" },
 ];
 
 // function getStatusBadgeVariant(status: string): "default" | "secondary" | "destructive" | "outline" {

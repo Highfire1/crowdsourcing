@@ -15,7 +15,7 @@ interface Course {
     prerequisites: string;
     corequisites: string;
     notes: string;
-    parse_status: 'ai_parsed' | 'ai_parsed_failed' | 'human_parsed_once_success' | 'human_parsed_unclear' | 'human_parsed_twice_success' | null;
+    parse_status: 'ai_parsed' | 'ai_parsed_failed' | 'human_parsed_once_success' | 'human_parsed_unclear' | 'human_parsed_twice_success' | 'human_verified' | 'no_parse_needed' | null;
 }
 
 interface CoursesPageProps {
@@ -30,13 +30,24 @@ function getStatusBadgeVariant(status: string | null): "default" | "secondary" |
         case "human_parsed_once_success":
         case "human_parsed_twice_success":
             return "default";
+        case "human_verified":
+            return "default"; // We'll override this with custom classes
         case "ai_parsed_failed":
             return "destructive";
         case "human_parsed_unclear":
             return "secondary";
+        case "no_parse_needed":
+            return "outline";
         default:
             return "outline";
     }
+}
+
+function getStatusBadgeClassName(status: string | null): string {
+    if (status === "human_verified") {
+        return "bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 hover:bg-green-100/80 dark:hover:bg-green-900/30";
+    }
+    return "";
 }
 
 function getStatusLabel(status: string | null): string {
@@ -51,6 +62,8 @@ function getStatusLabel(status: string | null): string {
             return "Human Parsed (Unclear)";
         case "human_parsed_twice_success":
             return "Human Parsed (Twice)";
+        case "human_verified":
+            return "Human Verified";
         case "no_parse_needed":
             return "No Parse Needed";
         case null:
@@ -189,7 +202,10 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
                                                     </CardDescription>
                                                 </div>
                                                 <div className="ml-4 flex-shrink-0">
-                                                    <Badge variant={getStatusBadgeVariant(course.parse_status)} className="text-xs">
+                                                    <Badge 
+                                                        variant={getStatusBadgeVariant(course.parse_status)} 
+                                                        className={`text-xs ${getStatusBadgeClassName(course.parse_status)}`}
+                                                    >
                                                         {getStatusLabel(course.parse_status)}
                                                     </Badge>
                                                 </div>

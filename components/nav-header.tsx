@@ -10,6 +10,9 @@ export function NavHeader() {
       <div className="w-full max-w-5xl flex justify-between items-center p-3 px-5 text-sm text-black dark:text-white">
         <div className="flex gap-5 items-center font-semibold">
           <Link href={"/"}>Home</Link>
+          <Link href={"/guide"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Guide
+          </Link>
           <Link href={"/courses"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Courses
           </Link>
@@ -19,9 +22,7 @@ export function NavHeader() {
           <Link href={"/verify"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Verify
           </Link>
-          <Link href={"/guide"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-            Guide
-          </Link>
+          
           {/* <Link href={"/account"} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
             Account
           </Link> */}
