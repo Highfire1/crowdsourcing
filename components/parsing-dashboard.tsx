@@ -20,7 +20,9 @@ export function ParsingDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/parsing-stats')
+        // Use public stats endpoint that doesn't require authentication
+        // This allows everyone to see the dashboard progress
+        const response = await fetch('/api/public-stats')
         if (response.ok) {
           const data = await response.json()
           setStats(data)
