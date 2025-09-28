@@ -54,21 +54,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Failed to check parse attempts' }, { status: 500 })
     }
 
-    // Check if course has already been verified
-    const { data: existingVerification, error: verifyError } = await supabase
-      .from('course_verifications')
-      .select('id')
-      .eq('dept', course.dept)
-      .eq('number', course.number)
-      .limit(1)
-
-    if (verifyError) {
-      console.error('Error checking existing verifications:', verifyError)
-      return NextResponse.json({ error: 'Failed to check verifications' }, { status: 500 })
-    }
-
     // If user has parse attempts or course is already verified, skip to next course
-    if ((userParseAttempts && userParseAttempts.length > 0) || (existingVerification && existingVerification.length > 0)) {
+    if ((userParseAttempts && userParseAttempts.length > 0) || course.parse_status === 'human_verified') {
       console.log(`Skipping course ${course.dept} ${course.number} - user has parse attempts or already verified`)
       // Recursively try the next course
       const nextUrl = new URL(request.url)
