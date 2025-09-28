@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    console.log(`Fetching verification courses at offset: ${offset} for user: ${user.id}`)
+    // console.log(`Fetching verification courses at offset: ${offset} for user: ${user.id}`)
 
     // First get courses that have been successfully parsed by humans
     const { data: eligibleCourses, error: coursesError, count } = await supabase
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       .order('id')
       .range(offset, offset)
     
-    console.log(eligibleCourses, coursesError, count)
+    // console.log(eligibleCourses, coursesError, count)
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
 
     // If user has parse attempts or course is already verified, skip to next course
     if ((userParseAttempts && userParseAttempts.length > 0) || course.parse_status === 'human_verified') {
-      console.log(`Skipping course ${course.dept} ${course.number} - user has parse attempts or already verified`)
+      // console.log(`Skipping course ${course.dept} ${course.number} - user has parse attempts or already verified`)
       // Recursively try the next course
       const nextUrl = new URL(request.url)
       nextUrl.searchParams.set('offset', (offset + 1).toString())

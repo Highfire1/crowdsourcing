@@ -43,10 +43,10 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
         return (
           <div key={Math.random()} style={{ marginLeft: indent }}>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className={`${getGroupLogicColor(group.logic)} text-white border-0 text-xs`}>
+              <Badge variant="outline" className={`${getGroupLogicColor(group.logic)} border-0 text-xs`}>
                 {group.logic.replace('_', ' ')}
               </Badge>
-              <span className="text-sm text-gray-600">
+              <span className="text-sm ">
                 {group.logic === 'ALL_OF' ? 'All of:' : 
                  group.logic === 'ONE_OF' ? 'Any one of:' : 'Any two of:'}
               </span>
@@ -207,7 +207,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                             Verifying: {course.dept} {course.number} {course.title ? `- ${course.title}` : ''}
                         </Link>
                     </CardTitle>
-                    <CardDescription className='text-white text-md ml-4'>
+                    <CardDescription className='text-md ml-4'>
                         <p>Prerequisites: {course.prerequisites || 'None'}</p>
                         <p>Corequisites: {course.corequisites || 'None.'}</p>
                         <p>Notes: {course.notes || 'None.'}</p>

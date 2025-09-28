@@ -35,11 +35,11 @@ function ReadOnlyRequirementItem({ requirement }: { requirement: RequirementNode
               <div className="flex items-center gap-2">
                 <Badge 
                   variant="outline" 
-                  className={`${getGroupLogicColor(group.logic)} text-white border-0`}
+                  className={`${getGroupLogicColor(group.logic)} border-0`}
                 >
                   {group.logic.replace('_', ' ')}
                 </Badge>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm ">
                   {group.logic === 'ALL_OF' ? 'All of the following:' : 
                    group.logic === 'ONE_OF' ? 'Any one of the following:' :
                    'Any two of the following:'}

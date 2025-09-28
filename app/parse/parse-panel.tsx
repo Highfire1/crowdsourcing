@@ -106,7 +106,7 @@ export default function ParsePanel({ course, onNextCourse }: Props) {
                             Parsing: {currentCourse.dept} {currentCourse.number} {currentCourse.title ? `- ${currentCourse.title}` : ''}
                         </Link>
                     </CardTitle>
-                    <CardDescription className='text-white text-md ml-4'>
+                    <CardDescription className='text-md ml-4 text-black dark:text-white'>
                         <p>Prerequisites: {currentCourse.prerequisites || 'None'}</p>
                         <p>Corequisites: {currentCourse.corequisites || 'None.'}</p>
                         <p>Notes: {currentCourse.notes || 'None.'}</p>
