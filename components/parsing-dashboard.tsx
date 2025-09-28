@@ -115,7 +115,7 @@ export function ParsingDashboard() {
                 title={`${stats.parsedOnce} courses parsed once`}
               />
               <div
-                className="absolute top-0 h-full bg-gray-500 transition-all duration-500"
+                className="absolute top-0 h-full transition-all duration-500"
                 style={{ 
                   left: `${noPrerequisitesPercentage + verifiedPercentage + parsedOncePercentage}%`,
                   width: `${notYetParsedPercentage}%` 
@@ -175,7 +175,7 @@ export function ParsingDashboard() {
               </div>
             </div>
 
-            <div className="text-center p-4 bg-gray-50 dark:bg-gray-950/20 rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className="text-center p-4  dark:bg-gray-950/20 rounded-lg border border-gray-200 dark:border-gray-800">
               <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
                 {stats.notYetParsed}
               </div>

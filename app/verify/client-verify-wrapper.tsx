@@ -21,7 +21,7 @@ interface ParseAttempt {
   id: string
   author: string
   created_at: string
-  requirements_json?: RequirementNode
+  parsed_prerequisites?: RequirementNode
 }
 
 interface CourseWithParseAttempts extends Course {

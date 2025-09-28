@@ -59,7 +59,7 @@ function ReadOnlyRequirementItem({ requirement }: { requirement: RequirementNode
       case 'course':
         const course = requirement as RequirementCourse
         return (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+          <div className="flex items-center gap-2 p-2 rounded">
             <Badge variant="secondary">Course</Badge>
             <span className="font-mono text-sm">
               {course.department} {course.number}
@@ -111,8 +111,8 @@ function ReadOnlyRequirementItem({ requirement }: { requirement: RequirementNode
       case 'creditCount':
         const creditCount = requirement as RequirementCreditCount
         return (
-          <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded">
-            <Badge variant="secondary" className="bg-yellow-100">Credits</Badge>
+          <div className="flex items-center gap-2 p-2 rounded">
+            <Badge variant="secondary" className="">Credits</Badge>
             <span className="text-sm">
               {creditCount.credits} credits
               {creditCount.level && ` at ${creditCount.level} level`}
@@ -150,8 +150,8 @@ function ReadOnlyRequirementItem({ requirement }: { requirement: RequirementNode
       case 'permission':
         const permission = requirement as RequirementPermission
         return (
-          <div className="flex items-center gap-2 p-2 bg-orange-50 rounded">
-            <Badge variant="secondary" className="bg-orange-100">Permission</Badge>
+          <div className="flex items-center gap-2 p-2 rounded">
+            <Badge variant="secondary" className="">Permission</Badge>
             <span className="text-sm">{permission.note}</span>
           </div>
         )
@@ -159,7 +159,7 @@ function ReadOnlyRequirementItem({ requirement }: { requirement: RequirementNode
       case 'other':
         const other = requirement as RequirementOther
         return (
-          <div className="flex items-center gap-2 p-2 bg-gray-50 rounded">
+          <div className="flex items-center gap-2 p-2 rounded">
             <Badge variant="secondary">Other</Badge>
             <span className="text-sm">{other.note}</span>
           </div>
@@ -203,7 +203,7 @@ export function ReadOnlyRequirementViewer({ requirements }: ReadOnlyRequirementV
           </CardHeader>
           <CardContent className="p-4">
             <ScrollArea className="h-[calc(100vh-200px)]">
-              <pre className="text-xs bg-gray-50 p-2 rounded overflow-auto whitespace-pre-wrap">
+              <pre className="text-xs p-2 rounded overflow-auto whitespace-pre-wrap">
                 {JSON.stringify(requirements, null, 2)}
               </pre>
             </ScrollArea>
