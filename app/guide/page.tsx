@@ -13,9 +13,9 @@ export default function GuidePage() {
         {/* 1. Project Introduction */}
         <section className="text-center space-y-6">
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold">Course Prerequisite Crowdsourcing Guide</h1>
+            <h1 className="text-4xl font-bold">How you can help:</h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Help us transform text into data that we can use to help you plan your courses!
+              {/* Help us transform text into data that we can use to help you plan your courses! */}
             </p>
           </div>
           
