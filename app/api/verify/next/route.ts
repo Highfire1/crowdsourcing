@@ -23,6 +23,8 @@ export async function GET(request: Request) {
       .eq('parse_status', 'human_parsed_once_success')
       .order('id')
       .range(offset, offset)
+    
+    console.log(eligibleCourses, coursesError, count)
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
@@ -66,7 +68,7 @@ export async function GET(request: Request) {
     // Get all parse attempts for this course
     const { data: parseAttempts, error: parseAttemptsError } = await supabase
       .from('parse_attempts')
-      .select('id, author, created_at, requirements_json')
+      .select('id, author, created_at, parsed_prerequisites')
       .eq('dept', course.dept)
       .eq('number', course.number)
       .order('created_at', { ascending: false })
