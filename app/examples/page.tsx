@@ -117,6 +117,41 @@ export default function ExamplesPage() {
           </CardContent>
         </Card>
 
+        {/* Example 3: Ambiguous Permission Scope */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ambiguous Permission Scope</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3 border rounded-lg bg-muted/20">
+              <p className="text-sm font-mono">
+                &quot;POL 141 and three lower division units in political science or permission of the department.&quot;
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm text-amber-700 font-medium">Mark as Ambiguous</span>
+              </div>
+            </div>
+
+            <div className="p-2 border-l-4 border-amber-200 bg-amber-50/50 dark:bg-amber-900/20 text-sm">
+              <strong>Problem:</strong> It&apos;s unclear what &quot;or permission of the department&quot; applies to:
+              <ul className="mt-2 ml-4 space-y-1">
+                <li>• Just the 3 lower division units?</li>
+                <li>• Both POL 141 AND the 3 units?</li>
+                <li>• The entire requirement?</li>
+              </ul>
+              <strong className="block mt-2">Decision:</strong> Mark as ambiguous - cannot parse definitively without clarification.
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="pb-24"></div>
       </div>
     </main>

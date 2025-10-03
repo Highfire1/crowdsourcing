@@ -17,6 +17,7 @@ interface ParseAttempt {
   created_at: string
   parsed_prerequisites?: RequirementNode
   parsed_credit_conflicts?: Record<string, unknown> | null
+  parse_notes?: string | null
 }
 
 interface Props {
@@ -382,7 +383,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                         className={`border transition-colors cursor-pointer hover:border-blue-300 ${selectedAttemptId === attempt.id ? 'border-blue-500' : ''}`}
                                         onClick={() => setSelectedAttemptId(attempt.id)}
                                     >
-                                        <CardHeader className="pb-2">
+                                        <CardHeader className="pb-2 pt-4">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-3">
                                                     {selectedAttemptId === attempt.id && (
@@ -424,7 +425,22 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                                 </div>
                                             </div>
                                         </CardHeader>
-                                        <CardContent className="pt-0">
+                                        <CardContent className="pt-0 pb-2">
+                                            
+                                            {/* Parse Notes */}
+                                            <div className="mb-4">
+                                                <h4 className="text-sm font-semibold mb-2">Parse Notes:</h4>
+                                                {attempt.parse_notes ? (
+                                                    <div className="p-3 rounded border bg-blue-50">
+                                                        <p className="text-sm whitespace-pre-wrap">{attempt.parse_notes}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-2 text-center text-gray-500 rounded border-2 border-dashed">
+                                                        <p className="text-sm">No parse notes</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
                                             {/* Show the visual requirements if available */}
                                             <div className="mb-4">
                                                 <h4 className="text-sm font-semibold mb-2">Prerequisites:</h4>
@@ -474,17 +490,18 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-4 text-center text-gray-500 rounded border-2 border-dashed">
+                                                    <div className="p-2 text-center text-gray-500 rounded border-2 border-dashed">
                                                         <p className="text-sm">No credit conflicts</p>
                                                     </div>
                                                 )}
                                             </div>
+
                                             
                                             {/* Collapsible JSON */}
                                             {expandedAttempts.has(attempt.id) && (
                                                 <div className="mt-4 border-t pt-4">
                                                     <h4 className="text-sm font-medium mb-2">JSON Structure:</h4>
-                                                    <pre className="p-3 rounded text-xs overflow-auto max-h-48 bg-gray-50">
+                                                    <pre className="p-3 rounded text-xs overflow-auto max-h-48 border">
                                                         {attempt.parsed_prerequisites ? 
                                                             JSON.stringify(attempt.parsed_prerequisites, null, 2) : 
                                                             'null (no prerequisites parsed)'

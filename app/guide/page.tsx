@@ -127,9 +127,32 @@ export default function GuidePage() {
                   </div>
                 </div>
 
-                {/* Example 2 */}
+                {/* Example 2: Ambiguous Permission Scope */}
                 <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm">Example 2: Multiple Course Requirements</h4>
+                  <h4 className="font-semibold text-sm">Example 2: Ambiguous Permission Scope</h4>
+                  <div className="p-3 border rounded-lg bg-muted/20">
+                    <p className="text-sm font-mono">&quot;POL 141 and three lower division units in political science or permission of the department.&quot;</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm text-amber-700 font-medium">Mark as Ambiguous</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-6">
+                      It&apos;s unclear what &quot;or permission of the department&quot; applies to:
+                      <br />• Just the 3 lower division units? 
+                      <br />• Both POL 141 AND the 3 units?
+                      <br />• The entire requirement?
+                    </p>
+                  </div>
+                </div>
+
+                {/* Example 3 */}
+                <div className="space-y-3 border-t pt-4">
+                  <h4 className="font-semibold text-sm">Example 3: Multiple Course Requirements</h4>
                   <div className="p-3 border rounded-lg bg-muted/20">
                     <p className="text-sm font-mono">&quot;MATH 140 and MATH 141, and PHYS 121.&quot;</p>
                   </div>

@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     // Get all parse attempts for this course
     const { data: parseAttempts, error: parseAttemptsError } = await supabase
       .from('parse_attempts')
-      .select('id, author, created_at, parsed_prerequisites')
+      .select('id, author, created_at, parsed_prerequisites, parsed_credit_conflicts, parse_notes')
       .eq('dept', course.dept)
       .eq('number', course.number)
       .order('created_at', { ascending: false })
