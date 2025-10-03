@@ -431,7 +431,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                                 {attempt.parsed_prerequisites ? (
                                                     <SimpleRequirementDisplay requirement={attempt.parsed_prerequisites} />
                                                 ) : (
-                                                    <div className="p-4 text-center text-gray-500 bg-gray-50 rounded border-2 border-dashed">
+                                                    <div className="p-4 text-center text-gray-500  rounded border-2 border-dashed">
                                                         <p className="text-sm">No prerequisites parsed</p>
                                                         <p className="text-xs mt-1">This might indicate &ldquo;Prerequisites: None&rdquo; or a parsing error</p>
                                                     </div>
@@ -474,7 +474,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-4 text-center text-gray-500 bg-gray-50 rounded border-2 border-dashed">
+                                                    <div className="p-4 text-center text-gray-500 rounded border-2 border-dashed">
                                                         <p className="text-sm">No credit conflicts</p>
                                                     </div>
                                                 )}
