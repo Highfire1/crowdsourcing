@@ -152,6 +152,115 @@ export default function ExamplesPage() {
           </CardContent>
         </Card>
 
+        {/* Example 4: Complex Prerequisites with Corequisites */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Complex Prerequisites + Corequisites</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3 border rounded-lg bg-muted/20">
+              <p className="text-sm font-mono">
+                &quot;Prerequisites: Pre-Calculus 12 (or equivalent), MATH 100 or MATH 110 (either may be taken concurrently), or permission of the department. Corequisite: CHEM 110.&quot;
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Prerequisites:</h4>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">ONE OF</Badge>
+                  <span className="text-sm">Any one of:</span>
+                </div>
+                <div className="ml-6 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-800 text-xs">HS Course</Badge>
+                    <span className="text-sm">Pre-Calculus 12 (or equivalent)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Course</Badge>
+                    <span className="text-sm">MATH 100 (concurrent allowed)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Course</Badge>
+                    <span className="text-sm">MATH 110 (concurrent allowed)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-orange-100 dark:bg-orange-800 text-xs">Permission</Badge>
+                    <span className="text-sm">Permission of the department</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="text-sm font-semibold">Corequisites:</h4>
+                <div className="ml-2 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">Course</Badge>
+                    <span className="text-sm">CHEM 110 (concurrent allowed)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2 border-l-4 border-blue-200 bg-blue-50/50 dark:bg-blue-900/20 text-sm">
+              <strong>Key Points:</strong>
+              <ul className="mt-1 ml-4 space-y-1">
+                <li>• &quot;Either may be taken concurrently&quot; applies to both MATH courses</li>
+                <li>• Permission is alternative to academic requirements</li>
+                <li>• Corequisites are separate from prerequisites</li>
+                <li>• Mark concurrent courses with &quot;Can be concurrent&quot; checkbox</li>
+              </ul>
+            </div>
+
+            <details className="mt-4">
+              <summary className="text-sm font-medium cursor-pointer hover:text-blue-600">
+                Show JSON Structure
+              </summary>
+              <pre className="mt-3 p-3 rounded border text-xs overflow-auto max-h-64 bg-gray-50 dark:bg-gray-900">
+{`{
+  "prerequisites": {
+    "type": "group",
+    "logic": "ONE_OF",
+    "children": [
+      {
+        "type": "HSCourse",
+        "course": "Pre-Calculus 12",
+        "orEquivalent": "true"
+      },
+      {
+        "type": "course",
+        "department": "MATH",
+        "number": "100",
+        "canBeTakenConcurrently": "true"
+      },
+      {
+        "type": "course",
+        "department": "MATH",
+        "number": "110",
+        "canBeTakenConcurrently": "true"
+      },
+      {
+        "type": "permission",
+        "note": "Permission of the department."
+      }
+    ]
+  },
+  "corequisites": {
+    "type": "course",
+    "department": "CHEM",
+    "number": "110",
+    "canBeTakenConcurrently": "true"
+  }
+}`}
+              </pre>
+            </details>
+          </CardContent>
+        </Card>
+
         <div className="pb-24"></div>
       </div>
     </main>
