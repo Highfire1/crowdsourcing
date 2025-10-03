@@ -19,7 +19,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
+// import { Checkbox } from "@/components/ui/checkbox"
 import {
   Command,
   CommandEmpty,
@@ -137,7 +137,7 @@ function SortableConflictItem({
   conflict, 
   onUpdate, 
   onDelete,
-  currentCourse 
+//   currentCourse 
 }: { 
   conflict: ConflictWithId
   onUpdate: (id: string, updatedConflict: CreditConflict) => void
