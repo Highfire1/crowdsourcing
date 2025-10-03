@@ -5,7 +5,7 @@ import { createClient as createUserClient } from '@/lib/supabase/server'
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { courseId, parsed, action } = body
+    const { courseId, parsed, action, parseNotes, parseStatus, parsedCreditConflicts } = body
 
     // Get user info from the regular client (for auth)
     const userSupabase = await createUserClient()
@@ -47,9 +47,10 @@ export async function POST(req: Request) {
       original_corequisites: course.corequisites,
       original_notes: course.notes,
       parsed_prerequisites: parsed ? JSON.parse(JSON.stringify(parsed)) : null,
-      parsed_corequisites: null,
-      parsed_credit_conflicts: null,
+      parsed_credit_conflicts: parsedCreditConflicts ? JSON.parse(JSON.stringify(parsedCreditConflicts)) : null,
       author: user.id, // Add the user ID as the author
+      parse_notes: parseNotes || '',
+      parse_status: parseStatus || 'success',
     }
 
     const { error: insertErr } = await supabase.from('parse_attempts').insert(insertPayload)
@@ -62,9 +63,15 @@ export async function POST(req: Request) {
     // Update parse_status when submitted, but only if currently ai_parsed or ai_parsed_failed
     if (action === 'submit') {
       if (course.parse_status === 'ai_parsed' || course.parse_status === 'ai_parsed_failed') {
+        // Set course status based on parse_status
+        let newCourseStatus = 'human_parsed_once_success'
+        if (parseStatus === 'ambiguous') {
+          newCourseStatus = 'human_parsed_unclear'
+        }
+
         const { error: updateErr } = await supabase
           .from('courses_sfu')
-          .update({ parse_status: 'human_parsed_once_success' })
+          .update({ parse_status: newCourseStatus })
           .eq('id', courseId)
 
         if (updateErr) {

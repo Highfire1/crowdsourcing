@@ -2,10 +2,11 @@
 
 import React from 'react'
 import { RequirementDndEditorProvider as RequirementFlowEditor } from '@/components/requirement-dnd-editor'
-// Button import not needed here; editor toolbar shows the buttons
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { RequirementNode } from '@/lib/course_types'
+import { RequirementNode, CreditConflict } from '@/lib/course_types'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
+import { X, AlertCircle } from 'lucide-react'
 
 interface Props {
     course: {
@@ -19,16 +20,49 @@ interface Props {
         notes?: string | null
     }
     onNextCourse?: () => void
+    onSkipToDepartment?: (dept: string) => Promise<void>
 }
 
-export default function ParsePanel({ course, onNextCourse }: Props) {
+export default function ParsePanel({ course, onNextCourse, onSkipToDepartment }: Props) {
     const [currentCourse, setCurrentCourse] = React.useState<typeof course | null>(course)
     const [currentParsed, setCurrentParsed] = React.useState<RequirementNode | null>(null)
     const [loading, setLoading] = React.useState(false)
-    const [submitted, setSubmitted] = React.useState(false)
-    const [submitState, setSubmitState] = React.useState<'idle'|'success'|'error'>('idle')
+    const [parseNotes, setParseNotes] = React.useState('')
+    const [creditConflicts, setCreditConflicts] = React.useState<CreditConflict[]>([])
 
-    const submit = async (parsed?: RequirementNode | null) => {
+    const showErrorToast = (message: string) => {
+        toast.custom((t) => (
+            <div className={`${
+                t.visible ? 'animate-enter' : 'animate-leave'
+            } max-w-md w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+                <div className="flex-1 w-0 p-4">
+                    <div className="flex items-start">
+                        <div className="flex-shrink-0 pt-0.5">
+                            <AlertCircle className="h-6 w-6 text-red-500" />
+                        </div>
+                        <div className="ml-3 flex-1">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                Error
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                {message}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex border-l border-gray-200 dark:border-gray-600">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+        ))
+    }
+
+    const submit = async (parsed?: RequirementNode | null, parseStatus: 'success' | 'ambiguous' = 'success') => {
         if (!currentCourse) return
         setLoading(true)
 
@@ -40,33 +74,58 @@ export default function ParsePanel({ course, onNextCourse }: Props) {
                     courseId: currentCourse.id,
                     parsed: parsed ?? currentParsed,
                     action: 'submit',
+                    parseNotes: parseNotes.trim() || null,
+                    parseStatus: parseStatus,
+                    parsedCreditConflicts: creditConflicts.length > 0 ? creditConflicts : null,
                 }),
             })
 
             if (!res.ok) {
                 const text = await res.text()
+                let errorMessage = 'Failed to save parse attempt'
+                try {
+                    const errorData = JSON.parse(text)
+                    if (errorData.error) {
+                        errorMessage = errorData.error
+                        if (errorData.details?.message) {
+                            errorMessage += ': ' + errorData.details.message
+                        }
+                    }
+                } catch {
+                    // If parsing fails, use the raw text or status
+                    errorMessage = text || res.statusText || errorMessage
+                }
                 console.warn('Save error', text || res.statusText)
-                setSubmitState('error')
+                showErrorToast(errorMessage)
             } else {
-                if (!submitted) {
-                    setSubmitted(true)
-                    setSubmitState('success')
-                } else {
-                    // user clicked Next — use the parent's offset-based next course handler
+                const courseName = `${currentCourse.dept} ${currentCourse.number}`
+                toast.success(parseStatus === 'ambiguous' 
+                    ? `${courseName} marked as ambiguous` 
+                    : `${courseName} submitted successfully`)
+                
+                // Always advance to next course automatically
+                setTimeout(() => {
                     if (onNextCourse) {
                         onNextCourse()
                     } else {
                         setCurrentCourse(null)
-                        setSubmitState('idle')
                     }
-                }
+                }, 1000) // Small delay so user can see the success message
             }
         } catch (err: unknown) {
             console.error('Save error', err)
-            setSubmitState('error')
+            showErrorToast('An unexpected error occurred')
         } finally {
             setLoading(false)
         }
+    }
+
+    const markAsAmbiguous = async () => {
+        if (!parseNotes.trim()) {
+            showErrorToast('Please add a reason explaining why this course is ambiguous before marking it.')
+            return
+        }
+        await submit(currentParsed, 'ambiguous')
     }
 
     const skip = async () => {
@@ -99,14 +158,14 @@ export default function ParsePanel({ course, onNextCourse }: Props) {
 
     return (
         <div className="w-full h-full flex flex-col">
-            <Card className="h-full flex flex-col">
-                <CardHeader>
+            <Card className="flex flex-col h-full">
+                <CardHeader className="h-32 flex-shrink-0 py-3">
                     <CardTitle>
                             <Link href={`/courses/${currentCourse.dept}/${currentCourse.number}`} className="text-blue-500 underline">
                             Parsing: {currentCourse.dept} {currentCourse.number} {currentCourse.title ? `- ${currentCourse.title}` : ''}
                         </Link>
                     </CardTitle>
-                    <CardDescription className='text-md ml-4 text-black dark:text-white'>
+                    <CardDescription className='text-md ml-4 text-black dark:text-white overflow-y-auto flex-1'>
                         <p>Prerequisites: {currentCourse.prerequisites || 'None'}</p>
                         <p>Corequisites: {currentCourse.corequisites || 'None.'}</p>
                         <p>Notes: {currentCourse.notes || 'None.'}</p>
@@ -115,21 +174,31 @@ export default function ParsePanel({ course, onNextCourse }: Props) {
 
                 <CardContent className="flex-1 p-0 min-h-0 flex flex-col">
                     {/* editor area */}
-                            <div className="flex-1 min-h-0">
-                                {currentCourse ? (
-                                    <RequirementFlowEditor
-                                                key={currentCourse?.id ?? 'no-course'}
-                                                prerequisiteText={currentCourse.prerequisites || ''}
-                                                onSave={(data) => submit(data)}
-                                                onSkip={() => skip()}
-                                                onRequirementChange={(d) => setCurrentParsed(d)}
-                                                loading={loading}
-                                                submitState={submitState}
-                                            />
-                                ) : (
-                                    <div className="p-6">No courses available</div>
-                                )}
-                            </div>
+                    <div className="flex-1 min-h-0">
+                        {currentCourse ? (
+                            <RequirementFlowEditor
+                                        key={currentCourse?.id ?? 'no-course'}
+                                        prerequisiteText={currentCourse.prerequisites || ''}
+                                        onSave={(data) => submit(data, 'success')}
+                                        onSkip={() => skip()}
+                                        onSkipToDepartment={onSkipToDepartment}
+                                        onMarkAmbiguous={markAsAmbiguous}
+                                        onRequirementChange={(d) => setCurrentParsed(d)}
+                                        parseNotes={parseNotes}
+                                        onParseNotesChange={setParseNotes}
+                                        creditConflicts={creditConflicts}
+                                        onCreditConflictsChange={setCreditConflicts}
+                                        courseNotes={currentCourse.notes || ''}
+                                        currentCourse={{
+                                            department: currentCourse.dept,
+                                            number: currentCourse.number
+                                        }}
+                                        loading={loading}
+                                    />
+                        ) : (
+                            <div className="p-6">No courses available</div>
+                        )}
+                    </div>
                 </CardContent>
 
                 {/* Lower JSON preview removed — editor already shows a live preview on the right */}

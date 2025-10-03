@@ -23,8 +23,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
-import { Save, Download, Trash2, Grip, SkipForward } from 'lucide-react'
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator 
+} from '@/components/ui/dropdown-menu'
+import { Save, Download, Trash2, Grip, SkipForward, AlertTriangle, X, AlertCircle, ChevronDown } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { 
   RequirementNode, 
   RequirementGroup,
@@ -36,23 +45,40 @@ import {
   RequirementCourseCount,
   RequirementProgram,
   RequirementPermission,
-  RequirementOther
+  RequirementOther,
+  CreditConflict
 } from '@/lib/course_types'
 import { 
   parsePrerequisiteText, 
   generateNodeId, 
-  getGroupLogicColor 
+  getGroupLogicColor,
+  SUBJECTS
 } from '@/lib/prerequisite-parser'
+import { ConflictsEditor } from '@/components/conflicts-editor'
 
 interface RequirementEditorProps {
   prerequisiteText?: string
   initialData?: RequirementNode
   onSave?: (data?: RequirementNode) => void
   onSkip?: () => void
+  onSkipToDepartment?: (dept: string) => Promise<void>
   onExport?: (data: RequirementNode) => void
   onRequirementChange?: (data: RequirementNode | null) => void
+  onMarkAmbiguous?: () => void
   loading?: boolean
-  submitState?: 'idle' | 'success' | 'error'
+  // Parse notes props
+  parseNotes?: string
+  onParseNotesChange?: (notes: string) => void
+  // Credit conflicts props
+  creditConflicts?: CreditConflict[]
+  onCreditConflictsChange?: (conflicts: CreditConflict[]) => void
+  // Course notes for conflict extraction
+  courseNotes?: string
+  // Current course info for conflict filtering
+  currentCourse?: {
+    department: string
+    number: string
+  }
 }
 
 interface RequirementItem {
@@ -573,7 +599,22 @@ function RequirementForm({
 }
 
 export function RequirementDndEditor(props: RequirementEditorProps) {
-  const { prerequisiteText = '', onSave, onSkip, onExport, onRequirementChange, loading = false, submitState = 'idle' } = props
+  const { 
+    prerequisiteText = '', 
+    onSave, 
+    onSkip, 
+    onSkipToDepartment,
+    onExport, 
+    onRequirementChange, 
+    onMarkAmbiguous, 
+    loading = false, 
+    parseNotes = '', 
+    onParseNotesChange,
+    creditConflicts = [],
+    onCreditConflictsChange,
+    courseNotes = '',
+    currentCourse
+  } = props
 
   const [items, setItems] = useState<(RequirementItem | GroupItem)[]>([])
   const [activeId, setActiveId] = useState<string | null>(null)
@@ -661,6 +702,21 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
       children: items.map(buildRequirement)
     } as RequirementGroup
   }, [items])
+
+  // Complete JSON including both prerequisites and conflicts
+  const completeJSON = React.useMemo(() => {
+    const result: Record<string, unknown> = {}
+    
+    if (currentRequirementJSON) {
+      result.prerequisites = currentRequirementJSON
+    }
+    
+    if (creditConflicts && creditConflicts.length > 0) {
+      result.parsed_credit_conflicts = creditConflicts
+    }
+    
+    return Object.keys(result).length > 0 ? result : null
+  }, [currentRequirementJSON, creditConflicts])
 
   React.useEffect(() => {
     onRequirementChange?.(currentRequirementJSON)
@@ -790,7 +846,53 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
   }
 
   const handleClear = () => setItems([])
-  const handleSave = () => currentRequirementJSON && onSave?.(currentRequirementJSON)
+  
+  const showErrorToast = (message: string) => {
+    toast.custom((t) => (
+      <div className={`${
+        t.visible ? 'animate-enter' : 'animate-leave'
+      } max-w-md w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`}>
+        <div className="flex-1 w-0 p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5">
+              <AlertCircle className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="ml-3 flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                Error
+              </p>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {message}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex border-l border-gray-200 dark:border-gray-600">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 dark:text-gray-400 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-red-500"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    ))
+  }
+  
+  const handleSave = () => {
+    // Check if there's any content to submit
+    const hasRequirements = currentRequirementJSON !== null
+    const hasConflicts = creditConflicts && creditConflicts.length > 0
+    const hasNotes = parseNotes && parseNotes.trim().length > 0
+    
+    if (!hasRequirements && !hasConflicts && !hasNotes) {
+      showErrorToast('Please parse a course, add a credit conflict, or add a note before submitting.')
+      return
+    }
+    
+    onSave?.(currentRequirementJSON || undefined)
+  }
+  
   const handleExport = () => currentRequirementJSON && onExport?.(currentRequirementJSON)
 
   // Parse prerequisite text for auto-suggestions
@@ -817,11 +919,11 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                 <div className="p-4 space-y-4">
                 
                 {/* Auto-detected courses */}
-                {(parsedPrerequisites.courses.length > 0 || parsedPrerequisites.hsCourses.length > 0) && (
+                {(parsedPrerequisites.courses.length > 0 || parsedPrerequisites.hsCourses.length > 0 || parsedPrerequisites.creditCounts.length > 0 || parsedPrerequisites.permissions.length > 0) && (
                   <div>
                     <h3 className="font-semibold text-sm mb-2 flex items-center">
                       <Badge variant="secondary" className="mr-2">AUTO</Badge>
-                      Detected Courses
+                      Detected Requirements
                     </h3>
                     <div className="space-y-1">
                       {parsedPrerequisites.courses.map((course, index) => (
@@ -853,6 +955,38 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                             className="w-full justify-start"
                           >
                             {hsCourse.course}
+                          </Button>
+                        </DraggableSidebarItem>
+                      ))}
+                      {parsedPrerequisites.creditCounts.map((creditCount, index) => (
+                        <DraggableSidebarItem
+                          key={`credit-${index}`}
+                          id={`auto-credit-${index}`}
+                          requirement={creditCount}
+                          onClick={() => addRequirement('creditCount', creditCount)}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start"
+                          >
+                            {creditCount.credits} units
+                          </Button>
+                        </DraggableSidebarItem>
+                      ))}
+                      {parsedPrerequisites.permissions.map((permission, index) => (
+                        <DraggableSidebarItem
+                          key={`permission-${index}`}
+                          id={`auto-permission-${index}`}
+                          requirement={permission}
+                          onClick={() => addRequirement('permission', permission)}
+                        >
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start text-xs"
+                          >
+                            {permission.note}
                           </Button>
                         </DraggableSidebarItem>
                       ))}
@@ -1026,15 +1160,64 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                 <Button variant="outline" size="sm" onClick={handleClear} disabled={items.length === 0}>
                   <Trash2 className="w-4 h-4 mr-2" />Clear
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleExport} disabled={!currentRequirementJSON}>
+                <Button variant="outline" size="sm" onClick={handleExport} disabled={!completeJSON}>
                   <Download className="w-4 h-4 mr-2"/>Export JSON
                 </Button>
-                <Button variant="outline" size="sm" onClick={onSkip}>
-                  <SkipForward className="w-4 h-4 mr-2"/>Skip
-                </Button>
-                <Button size="sm" onClick={handleSave} disabled={!currentRequirementJSON || loading}>
+                {onMarkAmbiguous && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={onMarkAmbiguous}
+                    className="text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950/20"
+                  >
+                    <AlertTriangle className="w-4 h-4 mr-2"/>Mark as Ambiguous
+                  </Button>
+                )}
+                {/* Skip button with department dropdown */}
+                <div className="flex border border-gray-200 rounded-md">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={onSkip} 
+                    className="rounded-r-none border-r border-gray-200 px-3"
+                  >
+                    <SkipForward className="w-4 h-4 mr-2"/>
+                    Skip
+                  </Button>
+                  {onSkipToDepartment && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="rounded-l-none px-2 hover:bg-gray-100"
+                        >
+                          <ChevronDown className="w-4 h-4"/>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-56">
+                        <div className="px-3 py-2 text-sm font-semibold text-gray-700 bg-gray-50">
+                          Skip to Department
+                        </div>
+                        <DropdownMenuSeparator />
+                        <div className="max-h-64 overflow-y-auto">
+                          {SUBJECTS.map((dept) => (
+                            <DropdownMenuItem 
+                              key={dept}
+                              onClick={() => onSkipToDepartment(dept)}
+                              className="text-sm py-2 px-3 hover:bg-blue-50 focus:bg-blue-50"
+                            >
+                              {dept}
+                            </DropdownMenuItem>
+                          ))}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
+                <Button size="sm" onClick={handleSave} disabled={loading}>
                   <Save className="w-4 h-4 mr-2"/>
-                  {loading ? 'Sending...' : (submitState === 'success' ? 'Submitted! Click here for next course.' : 'Submit')}
+                  {loading ? 'Sending...' : 'Submit'}
                 </Button>
               </div>
             </div>
@@ -1069,21 +1252,58 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
               </MainDroppableArea>
             </div>
 
-            {/* JSON Preview */}
-            <div className="w-96 border-l">
-              <Card className="h-full rounded-none border-0 flex flex-col">
+            {/* Parse Notes and JSON Preview */}
+            <div className="w-96 border-l flex flex-col">
+              {/* Parse Notes Section */}
+              {onParseNotesChange && (
+                <Card className="rounded-none border-0 border-b">
+                  <CardHeader className="pl-6 pt-3 pb-2">
+                    <CardTitle className="text-lg">Parse Notes</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Add any clarifications, assumptions, or ambiguities..."
+                        value={parseNotes}
+                        onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onParseNotesChange(e.target.value)}
+                        className="min-h-[60px] resize-none text-xs"
+                      />
+                      {/* <p className="text-xs text-muted-foreground">
+                        {parseNotes.length} characters
+                      </p> */}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Credit Conflicts Section */}
+              {onCreditConflictsChange && (
+                <Card className="rounded-none border-0 border-b">
+                  <CardContent className="p-4">
+                    <ConflictsEditor
+                      notesText={courseNotes}
+                      initialConflicts={creditConflicts}
+                      onConflictsChange={onCreditConflictsChange}
+                      currentCourse={currentCourse}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* JSON Preview */}
+              <Card className="flex-1 rounded-none border-0 flex flex-col">
                 <CardHeader>
                   <CardTitle className="text-lg">JSON Preview</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 p-0">
                   <ScrollArea className="h-full p-4">
-                    {currentRequirementJSON ? (
+                    {completeJSON ? (
                       <pre className="text-xs p-3 rounded whitespace-pre-wrap">
-                        {JSON.stringify(currentRequirementJSON, null, 2)}
+                        {JSON.stringify(completeJSON, null, 2)}
                       </pre>
                     ) : (
                       <div className="text-center text-gray-500 py-8">
-                        <p className="text-sm">No requirements added yet</p>
+                        <p className="text-sm">No requirements or conflicts added yet</p>
                       </div>
                     )}
                   </ScrollArea>

@@ -66,3 +66,45 @@ export interface RequirementOther {
     type: 'other';
     note: string;
 }
+
+// Credit Conflict Types
+export interface ConflictEquivalentCourse {
+    type: 'conflict_course';
+    department: string;
+    number: string;
+    title?: string;
+}
+
+export interface ConflictOther {
+    type: 'conflict_other';
+    note: string;
+}
+
+export type CreditConflict = ConflictEquivalentCourse | ConflictOther;
+
+// Verification Types
+export type VerificationStatus = 'success';
+
+export interface Verification {
+    id: number;
+    created_at: string;
+    author: string;
+    dept: string;
+    number: string;
+    verification_status: VerificationStatus;
+    parse_attempt_id: number;
+    parse_attempts?: {
+        id: number;
+        parsed_prereqs: RequirementNode[];
+        parse_notes?: string;
+        created_at: string;
+        author: string;
+    };
+}
+
+export interface VerificationRequest {
+    dept: string;
+    number: string;
+    verification_status: VerificationStatus;
+    parse_attempt_id: number;
+}

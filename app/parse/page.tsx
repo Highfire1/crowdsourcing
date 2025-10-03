@@ -7,7 +7,7 @@ export default function ParsePage() {
       <NavHeader />
 
       <div className="flex-1 w-full flex flex-col">
-        <div className="w-full py-4 flex-1 flex items-stretch">
+        <div className="w-full pb-4 flex-1 flex items-stretch">
           <div className="flex-1 m-2">
             <ClientParseWrapper />
           </div>

@@ -21,7 +21,8 @@ export async function GET(request: Request) {
       .from('courses_sfu')
       .select('*', { count: 'exact' })
       .eq('parse_status', 'human_parsed_once_success')
-      .order('id')
+      .order('dept', { ascending: true })
+      .order('number', { ascending: true })
       .range(offset, offset)
     
     // console.log(eligibleCourses, coursesError, count)
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
     if (!eligibleCourses || eligibleCourses.length === 0) {
       return NextResponse.json({
         course: null,
-        offset: offset + 1,
+        offset: offset, // Don't increment when no courses found
         total: count || 0,
         message: 'No more courses available for verification'
       })
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       course: courseWithParseAttempts,
-      offset: offset + 1,
+      offset: offset, // Return current offset, don't increment here
       total: count || 0
     })
 

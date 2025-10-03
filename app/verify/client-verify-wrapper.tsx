@@ -46,7 +46,7 @@ export function ClientVerifyWrapper() {
     }
   }
 
-  const fetchCourseAtOffset = async (offset: number) => {
+  const fetchCourseAtOffset = async (offset: number, incrementOffset: boolean = false) => {
     try {
       const response = await fetch(`/api/verify/next?offset=${offset}`, {
         method: 'GET',
@@ -62,11 +62,14 @@ export function ClientVerifyWrapper() {
       const data = await response.json()
       if (data.course) {
         setCourse(data.course)
-        // Update offset in localStorage for next time
-        if (typeof data.offset === 'number') {
+        // Only update offset if we want to increment (i.e., when moving to next course)
+        if (incrementOffset && typeof data.offset === 'number') {
           setOffsetInStorage(data.offset)
         }
       } else {
+        // No course available - reset offset to start over
+        console.log('No courses available, resetting offset to 0')
+        setOffsetInStorage(0)
         setCourse(null)
       }
     } catch (error) {
@@ -79,14 +82,18 @@ export function ClientVerifyWrapper() {
 
   useEffect(() => {
     const currentOffset = getOffsetFromStorage()
-    fetchCourseAtOffset(currentOffset)
+    // Don't increment offset on initial load - just fetch the course at current offset
+    fetchCourseAtOffset(currentOffset, false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Function to handle going to next course (for skip functionality)
   const handleNextCourse = () => {
     setLoading(true)
     const currentOffset = getOffsetFromStorage()
-    fetchCourseAtOffset(currentOffset)
+    // Increment the offset and save it, then fetch the next course
+    const nextOffset = currentOffset + 1
+    setOffsetInStorage(nextOffset)
+    fetchCourseAtOffset(nextOffset, false)
   }
 
   if (loading) {
@@ -109,7 +116,10 @@ export function ClientVerifyWrapper() {
           <CardTitle>No course available to verify</CardTitle>
         </CardHeader>
         <CardContent>
-          Sorry, no courses are available to verify right now.
+          <p>No courses are available to verify right now. Come back later.</p>
+          {/* <p className="mt-2 text-sm text-gray-600">
+            We&apos;ve reset to the beginning - refresh the page to start over, or try again later when new courses are added.
+          </p> */}
         </CardContent>
       </Card>
     )

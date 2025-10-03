@@ -15,66 +15,44 @@ export async function GET() {
       }
     )
 
-    // Get all parse statuses with range to ensure we get all records
-    const { data: courses, error, count } = await supabase
-      .from('courses_sfu')
-      .select('parse_status', { count: 'exact' })
-      .range(0, 9999) // Get up to 10k records to be safe
+    // Use parallel count queries for optimal performance
+    const promises = [
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).eq('parse_status', 'no_parse_needed'),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).eq('parse_status', 'human_verified'),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).in('parse_status', ['human_parsed_once_success', 'human_parsed_twice_success']),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).in('parse_status', ['ai_parsed', 'ai_parsed_failed']),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).eq('parse_status', 'human_parsed_unclear'),
+      supabase.from('courses_sfu').select('*', { count: 'exact', head: true }).is('parse_status', null)
+    ]
 
-    if (error) {
-      console.error('Error fetching public course statistics:', error)
-      return NextResponse.json(
-        { error: `Database error: ${error.message}` },
-        { status: 500 }
-      )
+    const results = await Promise.all(promises)
+
+    // Check for errors
+    for (const result of results) {
+      if (result.error) {
+        console.error('Error in count query:', result.error)
+        return NextResponse.json(
+          { error: `Database error: ${result.error.message}` },
+          { status: 500 }
+        )
+      }
     }
 
-    // Count each status manually with new categories
     const stats = {
-      total: count || courses?.length || 0,
-      noPrerequisites: 0,
-      verified: 0,
-      parsedOnce: 0,
-      notYetParsed: 0,
-      ambiguous: 0
+      total: results[0].count || 0,
+      noPrerequisites: results[1].count || 0,
+      verified: results[2].count || 0,
+      parsedOnce: results[3].count || 0,
+      notYetParsed: (results[4].count || 0) + (results[6].count || 0),
+      ambiguous: results[5].count || 0
     }
-
-    if (courses) {
-      courses.forEach(course => {
-        switch (course.parse_status) {
-          case 'no_parse_needed':
-            stats.noPrerequisites++
-            break
-          case 'human_verified':
-            stats.verified++
-            break
-          case 'human_parsed_once_success':
-          case 'human_parsed_twice_success':
-            stats.parsedOnce++
-            break
-          case 'ai_parsed':
-          case 'ai_parsed_failed':
-          case null:
-          case undefined:
-          case '':
-            stats.notYetParsed++
-            break
-          case 'human_parsed_unclear':
-            stats.ambiguous++
-            break
-          default:
-            // Log unknown statuses for debugging
-            console.log('Unknown status:', course.parse_status)
-            stats.notYetParsed++
-        }
-      })
-    }
-
-    console.log('Public parsing stats:', stats) // Debug log
     
-    // Set cache headers for public endpoint
+    // Disable all caching to ensure fresh data
     const headers = new Headers()
-    headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600') // 5 min cache, 10 min stale
+    headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    headers.set('Pragma', 'no-cache')
+    headers.set('Expires', '0')
     
     return NextResponse.json(stats, { headers })
   } catch (err) {

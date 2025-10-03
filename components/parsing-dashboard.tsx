@@ -22,7 +22,12 @@ export function ParsingDashboard() {
       try {
         // Use public stats endpoint that doesn't require authentication
         // This allows everyone to see the dashboard progress
-        const response = await fetch('/api/public-stats')
+        const response = await fetch('/api/public-stats', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        })
         if (response.ok) {
           const data = await response.json()
           setStats(data)

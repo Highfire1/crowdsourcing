@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { AI_USER_IDS } from '@/lib/ai-users'
 import { createClient as createUserClient } from '@/lib/supabase/server'
 
 export async function POST() {
@@ -23,7 +24,7 @@ export async function POST() {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
-    const authorId = '59e32dde-8d7f-4a53-ada4-78575a5a16de'
+    const authorId = AI_USER_IDS.GEMINI_PRO
 
     // Find all parse attempts by the specific author
     const { data: parseAttempts, error: parseAttemptsError } = await supabase

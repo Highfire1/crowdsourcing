@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { AI_USER_IDS } from '@/lib/ai-users'
 
 export default function AdminPanel() {
   const [loading, setLoading] = useState(false)
@@ -74,7 +75,7 @@ export default function AdminPanel() {
         </CardHeader>
         <CardContent>
           <p className="mb-4">This will find all courses where you have parse_attempts and update their status from <code>ai_parsed</code> or <code>ai_parsed_failed</code> to <code>human_parsed_once_success</code>.</p>
-          <p className="mb-4 text-sm text-muted-foreground">Author ID: 59e32dde-8d7f-4a53-ada4-78575a5a16de</p>
+          <p className="mb-4 text-sm text-muted-foreground">Author ID: {AI_USER_IDS.GEMINI_PRO}</p>
 
           <div className="flex items-center gap-4">
             <Button onClick={runParseAttemptsUpdate} disabled={parseAttemptsLoading}>
