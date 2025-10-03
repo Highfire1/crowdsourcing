@@ -217,7 +217,7 @@ function SortableConflictItem({
                 className="col-span-2 text-sm"
               />
             </div>
-            <div className="flex items-center space-x-2">
+            {/* <div className="flex items-center space-x-2">
               <Checkbox
                 id={`conflict-precedence-${conflict.id}`}
                 checked={conflict.conflict_only_when_taken_first || false}
@@ -237,7 +237,7 @@ function SortableConflictItem({
                   `this text should not appear`
                 }
               </label>
-            </div>
+            </div> */}
           </>
         ) : (
           <Textarea
