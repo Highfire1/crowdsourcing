@@ -19,9 +19,91 @@ import { CSS } from '@dnd-kit/utilities'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Trash2, GripVertical, Plus } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Trash2, GripVertical, Plus, Check, ChevronsUpDown } from "lucide-react"
 import { CreditConflict, ConflictEquivalentCourse, ConflictOther } from '@/lib/course_types'
-import { parsePrerequisiteText } from '@/lib/prerequisite-parser'
+import { parsePrerequisiteText, SUBJECTS } from '@/lib/prerequisite-parser'
+import { cn } from '@/lib/utils'
+
+// Searchable Department Combobox Component (for conflicts)
+function SearchableDepartmentDropdown({
+  value,
+  onChange,
+  placeholder = "Department",
+  className = "px-2 py-1 border rounded text-sm w-32"
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  className?: string
+}) {
+  const [open, setOpen] = useState(false)
+
+  const handleSelect = (currentValue: string) => {
+    onChange(currentValue === value ? "" : currentValue)
+    setOpen(false)
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between focus-visible:outline-none focus-visible:ring-0", className)}
+        >
+          {value || placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search departments..." className="focus-visible:outline-none focus-visible:ring-0" />
+          <CommandList>
+            <CommandEmpty>No department found.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem
+                value=""
+                onSelect={() => handleSelect("")}
+              >
+                {placeholder}
+              </CommandItem>
+              {SUBJECTS.map((subject) => (
+                <CommandItem
+                  key={subject}
+                  value={subject}
+                  onSelect={() => handleSelect(subject)}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === subject ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  {subject}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 interface ConflictsEditorProps {
   notesText?: string
@@ -40,16 +122,30 @@ function generateConflictId(): string {
   return `conflict_${++conflictIdCounter}`
 }
 
+// Helper function to remove id from conflicts
+const stripIds = (conflicts: ConflictWithId[]): CreditConflict[] => {
+  return conflicts.map((conflict) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, ...conflictWithoutId } = conflict
+    return conflictWithoutId
+  })
+}
+
 type ConflictWithId = (ConflictEquivalentCourse | ConflictOther) & { id: string }
 
 function SortableConflictItem({ 
   conflict, 
   onUpdate, 
-  onDelete 
+  onDelete,
+  currentCourse 
 }: { 
   conflict: ConflictWithId
   onUpdate: (id: string, updatedConflict: CreditConflict) => void
   onDelete: (id: string) => void 
+  currentCourse?: {
+    department: string
+    number: string
+  }
 }) {
   const {
     attributes,
@@ -68,7 +164,7 @@ function SortableConflictItem({
     opacity: isDragging ? 0.5 : 1,
   }
 
-  const handleUpdate = (field: string, value: string) => {
+  const handleUpdate = (field: string, value: string | boolean) => {
     if (conflict.type === 'conflict_course') {
       const conflictData = conflict as ConflictEquivalentCourse
       onUpdate(conflict.id, {
@@ -100,26 +196,49 @@ function SortableConflictItem({
 
       <div className="flex-1 space-y-2">
         {conflict.type === 'conflict_course' ? (
-          <div className="grid grid-cols-2 gap-2">
-            <Input
-              placeholder="Department (e.g., CMPT)"
-              value={conflict.department}
-              onChange={(e) => handleUpdate('department', e.target.value.toUpperCase())}
-              className="font-mono text-sm"
-            />
-            <Input
-              placeholder="Course Number (e.g., 120)"
-              value={conflict.number}
-              onChange={(e) => handleUpdate('number', e.target.value)}
-              className="font-mono text-sm"
-            />
-            <Input
-              placeholder="Course Title (optional)"
-              value={conflict.title || ''}
-              onChange={(e) => handleUpdate('title', e.target.value)}
-              className="col-span-2 text-sm"
-            />
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              <SearchableDepartmentDropdown
+                value={conflict.department}
+                onChange={(value) => handleUpdate('department', value)}
+                placeholder="Department"
+                className="font-mono text-sm w-full"
+              />
+              <Input
+                placeholder="Course Number (e.g., 120)"
+                value={conflict.number}
+                onChange={(e) => handleUpdate('number', e.target.value)}
+                className="font-mono text-sm"
+              />
+              <Input
+                placeholder="Course Title (optional)"
+                value={conflict.title || ''}
+                onChange={(e) => handleUpdate('title', e.target.value)}
+                className="col-span-2 text-sm"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id={`conflict-precedence-${conflict.id}`}
+                checked={conflict.conflict_only_when_taken_first || false}
+                onCheckedChange={(checked) => {
+                  handleUpdate('conflict_only_when_taken_first', checked === true)
+                }}
+              />
+              <label
+                htmlFor={`conflict-precedence-${conflict.id}`}
+                className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {currentCourse ? 
+                  <>
+                    Only check this box if the following wording is used: <br className='mb-1'/>
+                    Students who have taken {conflict.department} {conflict.number} <u>first</u> may not then take this course for further credit.
+                  </>:
+                  `this text should not appear`
+                }
+              </label>
+            </div>
+          </>
         ) : (
           <Textarea
             placeholder="Describe the conflict..."
@@ -193,7 +312,11 @@ export function ConflictsEditor({ notesText, initialConflicts = [], onConflictsC
       
       const newConflicts = arrayMove(conflicts, oldIndex, newIndex)
       setConflicts(newConflicts)
-      onConflictsChange?.(newConflicts.map(({ id, ...conflict }) => conflict))
+      onConflictsChange?.(newConflicts.map((conflict) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, ...conflictWithoutId } = conflict
+        return conflictWithoutId
+      }))
     }
   }
 
@@ -213,7 +336,7 @@ export function ConflictsEditor({ notesText, initialConflicts = [], onConflictsC
 
     const newConflicts = [...conflicts, newConflict]
     setConflicts(newConflicts)
-    onConflictsChange?.(newConflicts.map(({ id, ...conflict }) => conflict))
+    onConflictsChange?.(stripIds(newConflicts))
   }
 
   const updateConflict = (id: string, updatedConflict: CreditConflict) => {
@@ -221,13 +344,13 @@ export function ConflictsEditor({ notesText, initialConflicts = [], onConflictsC
       conflict.id === id ? { ...updatedConflict, id } : conflict
     )
     setConflicts(newConflicts)
-    onConflictsChange?.(newConflicts.map(({ id, ...conflict }) => conflict))
+    onConflictsChange?.(stripIds(newConflicts))
   }
 
   const deleteConflict = (id: string) => {
     const newConflicts = conflicts.filter(conflict => conflict.id !== id)
     setConflicts(newConflicts)
-    onConflictsChange?.(newConflicts.map(({ id, ...conflict }) => conflict))
+    onConflictsChange?.(stripIds(newConflicts))
   }
 
   const addExtractedConflicts = () => {
@@ -250,7 +373,7 @@ export function ConflictsEditor({ notesText, initialConflicts = [], onConflictsC
     })
     
     setConflicts(newConflicts)
-    onConflictsChange?.(newConflicts.map(({ id, ...conflict }) => conflict))
+    onConflictsChange?.(stripIds(newConflicts))
   }
 
   return (
@@ -309,6 +432,7 @@ export function ConflictsEditor({ notesText, initialConflicts = [], onConflictsC
                   conflict={conflict}
                   onUpdate={updateConflict}
                   onDelete={deleteConflict}
+                  currentCourse={currentCourse}
                 />
               ))}
             </div>

@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { filterRealUserIds, mapAIUsers } from '@/lib/ai-users'
+import { CreditConflict } from '@/lib/course_types'
 // Removed RequirementFlowEditor from course page (moved to /parse)
 
 interface Course {
@@ -35,20 +36,6 @@ interface ParseAttempt {
     parse_notes: string | null
     parse_status: string | null
 }
-
-interface ConflictEquivalentCourse {
-    type: 'conflict_course';
-    department: string;
-    number: string;
-    title?: string;
-}
-
-interface ConflictOther {
-    type: 'conflict_other';
-    note: string;
-}
-
-type CreditConflict = ConflictEquivalentCourse | ConflictOther;
 
 async function getCourse(dept: string, number: string): Promise<Course | null> {
     const supabase = await createClient()
@@ -335,6 +322,11 @@ export default async function CoursePage({ params }: { params: Promise<{ dept: s
                                                                                     {conflict.department} {conflict.number}
                                                                                     {conflict.title && ` - ${conflict.title}`}
                                                                                 </p>
+                                                                                {conflict.conflict_only_when_taken_first && (
+                                                                                    <p className="text-xs text-orange-600 mt-1">
+                                                                                        Only conflicts when taken first
+                                                                                    </p>
+                                                                                )}
                                                                             </div>
                                                                         ) : (
                                                                             <div>

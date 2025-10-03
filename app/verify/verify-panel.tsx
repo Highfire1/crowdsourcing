@@ -158,7 +158,7 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       default:
         return (
           <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">{req.type}</Badge>
+            <Badge variant="secondary" className="text-xs">{(req as RequirementNode).type || 'Unknown'}</Badge>
             <span className="text-sm">Unknown requirement</span>
           </div>
         )
@@ -453,6 +453,11 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                                                                 {conflict.department} {conflict.number}
                                                                                 {conflict.title && ` - ${conflict.title}`}
                                                                             </p>
+                                                                            {conflict.conflict_only_when_taken_first && (
+                                                                                <p className="text-xs text-orange-600 mt-1">
+                                                                                    Only conflicts when taken first
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                     ) : (
                                                                         <div>

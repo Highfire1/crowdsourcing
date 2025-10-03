@@ -1,6 +1,49 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function findAvailableCourse(supabase: any, user: any, dept: string | null, skippedCourses: string[], userParseAttempts: any[]) {
+  // Create a set of courses this user has already worked on (database + localStorage)
+  const userWorkedCourses = new Set(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    userParseAttempts?.map((attempt: any) => `${attempt.dept}-${attempt.number}`) || []
+  )
+  
+  // Add localStorage skipped courses to the exclusion set
+  skippedCourses.forEach((courseKey: string) => userWorkedCourses.add(courseKey))
+
+  // Build the query for available courses
+  let query = supabase
+    .from('courses_sfu')
+    .select('id, dept, number, title, description, prerequisites, corequisites, notes, parse_status')
+    .in('parse_status', ['ai_parsed', 'ai_parsed_failed'])
+    .order('dept', { ascending: true })
+    .order('number', { ascending: true })
+
+  // Add department filter if specified
+  if (dept) {
+    query = query.eq('dept', dept)
+  }
+
+  const { data: availableCourses, error } = await query
+
+  if (error) {
+    throw error
+  }
+
+  if (!availableCourses || availableCourses.length === 0) {
+    return null
+  }
+
+  // Filter out courses the user has already worked on
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const unworkedCourses = availableCourses.filter((course: any) => 
+    !userWorkedCourses.has(`${course.dept}-${course.number}`)
+  )
+
+  return unworkedCourses.length > 0 ? unworkedCourses[0] : null
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -16,34 +59,6 @@ export async function POST(request: Request) {
 
     console.log(`[parse_attempts/assign-with-skipped] Assigning course for user: ${user.id}${dept ? ` in department: ${dept}` : ''}, skipping: ${skippedCourses.join(', ')}`)
 
-    // Build the query for available courses
-    let query = supabase
-      .from('courses_sfu')
-      .select('id, dept, number, title, description, prerequisites, corequisites, notes, parse_status')
-      .in('parse_status', ['ai_parsed', 'ai_parsed_failed'])
-      .order('dept', { ascending: true })
-      .order('number', { ascending: true })
-
-    // Add department filter if specified
-    if (dept) {
-      query = query.eq('dept', dept)
-    }
-
-    const { data: availableCourses, error } = await query
-
-    if (error) {
-      console.error('[parse_attempts/assign-with-skipped] Error fetching courses:', error)
-      return NextResponse.json({ course: null, error: error.message }, { status: 500 })
-    }
-
-    if (!availableCourses || availableCourses.length === 0) {
-      console.log(`[parse_attempts/assign-with-skipped] No courses available${dept ? ` for department ${dept}` : ''}`)
-      return NextResponse.json({ 
-        course: null, 
-        message: `No courses available${dept ? ` for department ${dept}` : ''}` 
-      })
-    }
-
     // Check which courses this user has already worked on (from database)
     const { data: userParseAttempts, error: userParseError } = await supabase
       .from('parse_attempts')
@@ -55,36 +70,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Failed to check user history' }, { status: 500 })
     }
 
-    // Create a set of courses this user has already worked on (database + localStorage)
-    const userWorkedCourses = new Set(
-      userParseAttempts?.map(attempt => `${attempt.dept}-${attempt.number}`) || []
-    )
+    // Try to find a course in the requested department first
+    let assignedCourse = null
     
-    // Add localStorage skipped courses to the exclusion set
-    skippedCourses.forEach((courseKey: string) => userWorkedCourses.add(courseKey))
-
-    // Filter out courses the user has already worked on
-    const unworkedCourses = availableCourses.filter(course => 
-      !userWorkedCourses.has(`${course.dept}-${course.number}`)
-    )
-
-    if (unworkedCourses.length === 0) {
-      console.log(`[parse_attempts/assign-with-skipped] User has already worked on all available courses${dept ? ` in department ${dept}` : ''}`)
-      return NextResponse.json({ 
-        course: null, 
-        message: `You have already worked on all available courses${dept ? ` in department ${dept}` : ''}` 
-      })
+    if (dept) {
+      try {
+        assignedCourse = await findAvailableCourse(supabase, user, dept, skippedCourses, userParseAttempts)
+        
+        if (!assignedCourse) {
+          console.log(`[parse_attempts/assign-with-skipped] No courses available for department ${dept}, trying other departments`)
+          
+          // Try other departments
+          assignedCourse = await findAvailableCourse(supabase, user, null, skippedCourses, userParseAttempts)
+        }
+      } catch (error) {
+        console.error('[parse_attempts/assign-with-skipped] Error fetching courses:', error)
+        return NextResponse.json({ course: null, error: String(error) }, { status: 500 })
+      }
+    } else {
+      // No specific department requested, try all departments
+      try {
+        assignedCourse = await findAvailableCourse(supabase, user, null, skippedCourses, userParseAttempts)
+      } catch (error) {
+        console.error('[parse_attempts/assign-with-skipped] Error fetching courses:', error)
+        return NextResponse.json({ course: null, error: String(error) }, { status: 500 })
+      }
     }
 
-    // Return the first unworked course
-    const assignedCourse = unworkedCourses[0]
+    if (!assignedCourse) {
+      console.log(`[parse_attempts/assign-with-skipped] No courses available in any department, suggesting to clear skipped courses`)
+      return NextResponse.json({ 
+        course: null, 
+        message: 'No courses available in any department',
+        suggestion: 'clear_skipped',
+        clearSkippedMessage: 'You have worked on or skipped all available courses. Would you like to clear your skipped courses to start over?'
+      })
+    }
 
     console.log(`[parse_attempts/assign-with-skipped] Assigned course: ${assignedCourse.dept} ${assignedCourse.number} to user ${user.id}`)
 
     return NextResponse.json({ 
       course: assignedCourse,
-      totalAvailable: availableCourses.length,
-      totalUnworked: unworkedCourses.length
+      fromDifferentDept: dept && assignedCourse.dept !== dept
     })
 
   } catch (err) {

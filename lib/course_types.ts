@@ -73,6 +73,7 @@ export interface ConflictEquivalentCourse {
     department: string;
     number: string;
     title?: string;
+    conflict_only_when_taken_first?: true;
 }
 
 export interface ConflictOther {

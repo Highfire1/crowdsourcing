@@ -19,7 +19,6 @@ interface Course {
 export function ClientParseWrapper() {
   const [course, setCourse] = useState<Course | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentDepartment, setCurrentDepartment] = useState<string | null>(null)
 
   const getDepartmentFromStorage = (): string | null => {
     if (typeof window !== 'undefined') {
@@ -106,8 +105,24 @@ export function ClientParseWrapper() {
         setCourse(data.course)
         // Update the current department when we get a course
         const courseDept = data.course.dept
-        setCurrentDepartment(courseDept)
         setDepartmentInStorage(courseDept)
+        
+        // Show message if course is from a different department
+        if (data.fromDifferentDept) {
+          console.log(`No courses available in ${dept}, assigned course from ${courseDept} instead`)
+        }
+      } else if (data.suggestion === 'clear_skipped') {
+        // Show option to clear skipped courses
+        const shouldClear = confirm(data.clearSkippedMessage || 'Would you like to clear your skipped courses to start over?')
+        if (shouldClear) {
+          // Clear skipped courses from localStorage
+          localStorage.removeItem('parse-skipped-courses')
+          // Try fetching again
+          fetchAssignedCourse(dept)
+          return
+        } else {
+          setCourse(null)
+        }
       } else {
         console.log(data.message || 'No courses available')
         setCourse(null)
@@ -118,7 +133,7 @@ export function ClientParseWrapper() {
     } finally {
       setLoading(false)
     }
-  }, [setCurrentDepartment, setDepartmentInStorage])
+  }, [setDepartmentInStorage])
 
   useEffect(() => {
     // Check for URL parameters first
@@ -138,7 +153,6 @@ export function ClientParseWrapper() {
     const storedDept = getDepartmentFromStorage()
     if (storedDept) {
       console.log(`Resuming in department: ${storedDept}`)
-      setCurrentDepartment(storedDept)
       fetchAssignedCourse(storedDept)
     } else {
       // If no stored department, get an assigned course from any department
@@ -156,18 +170,9 @@ export function ClientParseWrapper() {
       // Add this course to the skipped list immediately
       addSkippedCourseToStorage(course.dept, course.number)
       
-      // Also save to database (but don't wait for it)
-      fetch('/api/parse_attempts/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          courseId: course.id,
-          parsed: null,
-          action: 'skip',
-          parseStatus: 'skipped',
-        }),
-      }).catch(error => console.error('Error saving skip entry:', error))
-
+      // For skipped courses, we don't create a parse attempt in the database
+      // We only track them in localStorage to avoid assigning them again
+      
       // Stay in the current department if we have one
       const currentDept = getDepartmentFromStorage()
       fetchAssignedCourse(currentDept || undefined)
@@ -182,7 +187,6 @@ export function ClientParseWrapper() {
   // Function to skip to a specific department
   const handleSkipToDepartment = async (dept: string) => {
     setLoading(true)
-    setCurrentDepartment(dept)
     setDepartmentInStorage(dept)
     fetchAssignedCourse(dept)
   }

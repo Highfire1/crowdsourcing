@@ -10,8 +10,10 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  closestCenter,
   pointerWithin,
   useDroppable,
+  CollisionDetection,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -32,8 +34,22 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator 
 } from '@/components/ui/dropdown-menu'
-import { Save, Download, Trash2, Grip, SkipForward, AlertTriangle, X, AlertCircle, ChevronDown } from 'lucide-react'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Save, Download, Trash2, Grip, SkipForward, AlertTriangle, X, AlertCircle, ChevronDown, Check, ChevronsUpDown } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { cn } from '@/lib/utils'
 import { 
   RequirementNode, 
   RequirementGroup,
@@ -55,6 +71,111 @@ import {
   SUBJECTS
 } from '@/lib/prerequisite-parser'
 import { ConflictsEditor } from '@/components/conflicts-editor'
+
+// Searchable Department Combobox Component
+function SearchableDepartmentDropdown({
+  value,
+  onChange,
+  placeholder = "Department",
+  className = "px-2 py-1 border rounded text-sm w-32",
+  allowMultiple = false
+}: {
+  value: string | string[]
+  onChange: (value: string | string[]) => void
+  placeholder?: string
+  className?: string
+  allowMultiple?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  
+  const displayValue = allowMultiple 
+    ? Array.isArray(value) ? value.join(', ') : value
+    : value
+
+  const handleSelect = (currentValue: string) => {
+    if (allowMultiple) {
+      const currentValues = Array.isArray(value) ? value : (value ? [value] : [])
+      if (currentValues.includes(currentValue)) {
+        onChange(currentValues.filter(v => v !== currentValue))
+      } else {
+        onChange([...currentValues, currentValue])
+      }
+    } else {
+      onChange(currentValue === value ? "" : currentValue)
+      setOpen(false)
+    }
+  }
+
+  const handleClearAll = () => {
+    if (allowMultiple) {
+      onChange([])
+    } else {
+      onChange("")
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("justify-between", className)}
+        >
+          {displayValue || placeholder}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[200px] p-0">
+        <Command>
+          <CommandInput placeholder="Search departments..." className="focus-visible:outline-none focus-visible:ring-0" />
+          <CommandList>
+            <CommandEmpty>No department found.</CommandEmpty>
+            <CommandGroup>
+              {allowMultiple && (
+                <CommandItem
+                  value="__clear_all__"
+                  onSelect={handleClearAll}
+                >
+                  Clear All
+                </CommandItem>
+              )}
+              {!allowMultiple && (
+                <CommandItem
+                  value=""
+                  onSelect={() => handleSelect("")}
+                >
+                  {placeholder}
+                </CommandItem>
+              )}
+              {SUBJECTS.map((subject) => {
+                const isSelected = allowMultiple 
+                  ? Array.isArray(value) && value.includes(subject)
+                  : value === subject
+                return (
+                  <CommandItem
+                    key={subject}
+                    value={subject}
+                    onSelect={() => handleSelect(subject)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        isSelected ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {subject}
+                  </CommandItem>
+                )
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
 
 interface RequirementEditorProps {
   prerequisiteText?: string
@@ -196,13 +317,15 @@ function SortableRequirementItem({
   onUpdate, 
   onDelete,
   level = 0,
-  isOverGroup 
+  isOverGroup,
+  overId // Add overId prop to pass down to nested items
 }: { 
   item: RequirementItem | GroupItem
   onUpdate: (id: string, requirement: RequirementNode) => void
   onDelete: (id: string) => void
   level?: number
   isOverGroup?: boolean
+  overId?: string | null // Add this prop
 }) {
   const {
     attributes,
@@ -266,7 +389,7 @@ function SortableRequirementItem({
       {groupItem && (
         <DroppableGroupZone 
           groupId={item.id}
-          isOver={isOverGroup || false}
+          isOver={overId === `group-${item.id}` || false}
         >
           <SortableContext items={groupItem.children.map(c => c.id)} strategy={verticalListSortingStrategy}>
             {groupItem.children.map((child) => (
@@ -276,6 +399,8 @@ function SortableRequirementItem({
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 level={level + 1}
+                isOverGroup={overId === `group-${child.id}`}
+                overId={overId}
               />
             ))}
           </SortableContext>
@@ -323,29 +448,40 @@ function RequirementForm({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Badge variant="outline">Course</Badge>
-            <input
-              type="text"
-              placeholder="Dept"
+            <SearchableDepartmentDropdown
               value={course.department}
-              onChange={(e) => handleFieldChange('department', e.target.value)}
-              className="px-2 py-1 border rounded text-sm w-16"
+              onChange={(value) => handleFieldChange('department', value as string)}
+              placeholder="Dept"
+              className="px-2 py-1 border rounded text-sm w-24"
             />
             <input
               type="text"
               placeholder="Number"
               value={course.number}
               onChange={(e) => handleFieldChange('number', e.target.value)}
-              className="px-2 py-1 border rounded text-sm w-16"
+              className="px-2 py-1 border rounded text-sm w-20"
             />
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <input
-              type="text"
-              placeholder="Min Grade"
+            <select
               value={course.minGrade || ''}
               onChange={(e) => handleFieldChange('minGrade', e.target.value || undefined)}
-              className="px-2 py-1 border rounded text-sm w-20"
-            />
+              className="px-2 py-1 border rounded text-sm w-24"
+            >
+              <option value="">Any Grade</option>
+              <option value="A+">A+</option>
+              <option value="A">A</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B">B</option>
+              <option value="B-">B-</option>
+              <option value="C+">C+</option>
+              <option value="C">C</option>
+              <option value="C-">C-</option>
+              <option value="D+">D+</option>
+              <option value="D">D</option>
+              <option value="P">P</option>
+            </select>
             <label className="flex items-center gap-1">
               <input
                 type="checkbox"
@@ -386,7 +522,7 @@ function RequirementForm({
               placeholder="Min Grade"
               value={hsCourse.minGrade || ''}
               onChange={(e) => handleFieldChange('minGrade', e.target.value || undefined)}
-              className="px-2 py-1 border rounded text-sm w-20"
+              className="px-2 py-1 border rounded text-sm w-24"
             />
             <label className="flex items-center gap-1">
               <input
@@ -447,16 +583,15 @@ function RequirementForm({
             <span className="text-sm">credits</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <input
-              type="text"
-              placeholder="Department(s)"
-              value={Array.isArray(credits.department) ? credits.department.join(', ') : (credits.department || '')}
-              onChange={(e) => {
-                const value = e.target.value
-                const departments = value.includes(',') ? value.split(',').map(d => d.trim()) : value
-                handleFieldChange('department', departments || undefined)
+            <SearchableDepartmentDropdown
+              value={Array.isArray(credits.department) ? credits.department : (credits.department ? [credits.department] : [])}
+              onChange={(value) => {
+                const departments = Array.isArray(value) ? value : (value ? [value] : [])
+                handleFieldChange('department', departments.length === 0 ? undefined : (departments.length === 1 ? departments[0] : departments))
               }}
-              className="px-2 py-1 border rounded text-sm w-32"
+              placeholder="Any Department"
+              className="px-2 py-1 border rounded text-sm w-40"
+              allowMultiple={true}
             />
             <select
               value={credits.level || ''}
@@ -471,20 +606,32 @@ function RequirementForm({
               <option value="LD">Lower Division</option>
               <option value="UD">Upper Division</option>
             </select>
-            <input
-              type="text"
-              placeholder="Min Grade"
+            <select
               value={credits.minGrade || ''}
               onChange={(e) => handleFieldChange('minGrade', e.target.value || undefined)}
-              className="px-2 py-1 border rounded text-sm w-20"
-            />
+              className="px-2 py-1 border rounded text-sm w-24"
+            >
+              <option value="">Any Grade</option>
+              <option value="A+">A+</option>
+              <option value="A">A</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B">B</option>
+              <option value="B-">B-</option>
+              <option value="C+">C+</option>
+              <option value="C">C</option>
+              <option value="C-">C-</option>
+              <option value="D+">D+</option>
+              <option value="D">D</option>
+              <option value="P">P</option>
+            </select>
             <label className="flex items-center gap-1">
               <input
                 type="checkbox"
                 checked={credits.canBeTakenConcurrently === 'true'}
                 onChange={(e) => handleFieldChange('canBeTakenConcurrently', e.target.checked ? 'true' : undefined)}
               />
-              <span>Concurrent</span>
+              <span>Can be concurrent</span>
             </label>
           </div>
         </div>
@@ -505,16 +652,15 @@ function RequirementForm({
             <span className="text-sm">courses</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <input
-              type="text"
-              placeholder="Department(s)"
-              value={Array.isArray(courseCount.department) ? courseCount.department.join(', ') : (courseCount.department || '')}
-              onChange={(e) => {
-                const value = e.target.value
-                const departments = value.includes(',') ? value.split(',').map(d => d.trim()) : value
-                handleFieldChange('department', departments || undefined)
+            <SearchableDepartmentDropdown
+              value={Array.isArray(courseCount.department) ? courseCount.department : (courseCount.department ? [courseCount.department] : [])}
+              onChange={(value) => {
+                const departments = Array.isArray(value) ? value : (value ? [value] : [])
+                handleFieldChange('department', departments.length === 0 ? undefined : (departments.length === 1 ? departments[0] : departments))
               }}
-              className="px-2 py-1 border rounded text-sm w-32"
+              placeholder="Any Department"
+              className="px-2 py-1 border rounded text-sm w-40"
+              allowMultiple={true}
             />
             <select
               value={courseCount.level || ''}
@@ -529,13 +675,25 @@ function RequirementForm({
               <option value="LD">Lower Division</option>
               <option value="UD">Upper Division</option>
             </select>
-            <input
-              type="text"
-              placeholder="Min Grade"
+            <select
               value={courseCount.minGrade || ''}
               onChange={(e) => handleFieldChange('minGrade', e.target.value || undefined)}
-              className="px-2 py-1 border rounded text-sm w-20"
-            />
+              className="px-2 py-1 border rounded text-sm w-24"
+            >
+              <option value="">Any Grade</option>
+              <option value="A+">A+</option>
+              <option value="A">A</option>
+              <option value="A-">A-</option>
+              <option value="B+">B+</option>
+              <option value="B">B</option>
+              <option value="B-">B-</option>
+              <option value="C+">C+</option>
+              <option value="C">C</option>
+              <option value="C-">C-</option>
+              <option value="D+">D+</option>
+              <option value="D">D</option>
+              <option value="P">P</option>
+            </select>
             <label className="flex items-center gap-1">
               <input
                 type="checkbox"
@@ -627,6 +785,30 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
       },
     })
   )
+
+  // Custom collision detection that prioritizes deeper nested groups
+  const customCollisionDetection: CollisionDetection = (args) => {
+    // First try pointerWithin to get all potential collisions
+    const pointerCollisions = pointerWithin(args)
+    
+    if (pointerCollisions.length === 0) {
+      return closestCenter(args)
+    }
+
+    // If we have multiple collisions, prioritize group drops over main area
+    const groupCollisions = pointerCollisions.filter(collision => 
+      typeof collision.id === 'string' && collision.id.startsWith('group-')
+    )
+    
+    if (groupCollisions.length > 0) {
+      // Return the group collision with the longest id (indicating deeper nesting)
+      return groupCollisions.sort((a, b) => 
+        String(b.id).length - String(a.id).length
+      )
+    }
+
+    return pointerCollisions
+  }
 
   // Find an item by ID, searching recursively through groups
   const findItem = (id: string): RequirementItem | GroupItem | null => {
@@ -736,23 +918,35 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
     setActiveId(null)
     setOverId(null)
 
-    if (!over) return
+    if (!over) {
+      console.log('No drop target detected')
+      return
+    }
 
     const activeId = active.id as string
     const overId = over.id as string
 
+    console.log('Drag end:', { activeId, overId })
+
     // Handle dragging from sidebar
     if (activeId.startsWith('sidebar-')) {
       const requirement = active.data.current?.requirement as RequirementNode
-      if (!requirement) return
+      if (!requirement) {
+        console.log('No requirement data found')
+        return
+      }
 
       if (overId.startsWith('group-')) {
         // Drag from sidebar to group
         const groupId = overId.replace('group-', '')
+        console.log('Adding requirement to group:', groupId)
         addRequirement(requirement.type, requirement, groupId)
       } else if (overId === 'main-area') {
         // Drag from sidebar to main area
+        console.log('Adding requirement to main area')
         addRequirement(requirement.type, requirement)
+      } else {
+        console.log('Unknown drop target:', overId)
       }
       return
     }
@@ -799,17 +993,28 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
     }
 
     if (parentId) {
-      // Add to parent group
-      setItems(prev => prev.map(item => {
-        if (item.id === parentId && item.requirement.type === 'group') {
-          const groupItem = item as GroupItem
-          return {
-            ...groupItem,
-            children: [...groupItem.children, newItem]
+      // Add to parent group - search recursively through all groups
+      const addToGroupRecursively = (items: (RequirementItem | GroupItem)[]): (RequirementItem | GroupItem)[] => {
+        return items.map(item => {
+          if (item.id === parentId && item.requirement.type === 'group') {
+            const groupItem = item as GroupItem
+            console.log('Found target group, adding item')
+            return {
+              ...groupItem,
+              children: [...groupItem.children, newItem]
+            }
+          } else if (item.requirement.type === 'group') {
+            const groupItem = item as GroupItem
+            return {
+              ...groupItem,
+              children: addToGroupRecursively(groupItem.children)
+            }
           }
-        }
-        return item
-      }))
+          return item
+        })
+      }
+
+      setItems(prev => addToGroupRecursively(prev))
     } else {
       // Add to root level
       setItems(prev => [...prev, newItem])
@@ -835,14 +1040,22 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
   }
 
   const deleteRequirement = (id: string) => {
-    setItems(prev => prev.filter(item => {
-      if (item.id === id) return false
-      if (item.requirement.type === 'group') {
-        const groupItem = item as GroupItem
-        groupItem.children = groupItem.children.filter(child => child.id !== id)
-      }
-      return true
-    }))
+    const deleteRecursively = (items: (RequirementItem | GroupItem)[]): (RequirementItem | GroupItem)[] => {
+      return items.filter(item => {
+        if (item.id === id) {
+          console.log('Deleting item:', id)
+          return false // Remove this item
+        }
+        if (item.requirement.type === 'group') {
+          const groupItem = item as GroupItem
+          // Recursively delete from children
+          groupItem.children = deleteRecursively(groupItem.children)
+        }
+        return true // Keep this item
+      })
+    }
+
+    setItems(prev => deleteRecursively(prev))
   }
 
   const handleClear = () => setItems([])
@@ -901,7 +1114,7 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={pointerWithin}
+      collisionDetection={customCollisionDetection}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
@@ -1163,16 +1376,6 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                 <Button variant="outline" size="sm" onClick={handleExport} disabled={!completeJSON}>
                   <Download className="w-4 h-4 mr-2"/>Export JSON
                 </Button>
-                {onMarkAmbiguous && (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={onMarkAmbiguous}
-                    className="text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950/20"
-                  >
-                    <AlertTriangle className="w-4 h-4 mr-2"/>Mark as Ambiguous
-                  </Button>
-                )}
                 {/* Skip button with department dropdown */}
                 <div className="flex border border-gray-200 rounded-md">
                   <Button 
@@ -1205,7 +1408,7 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                             <DropdownMenuItem 
                               key={dept}
                               onClick={() => onSkipToDepartment(dept)}
-                              className="text-sm py-2 px-3 hover:bg-blue-50 focus:bg-blue-50"
+                              className="text-sm py-2 px-3 hover:bg-blue-50 focus:bg-blue-50 hover:text-black focus:text-black"
                             >
                               {dept}
                             </DropdownMenuItem>
@@ -1244,6 +1447,7 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                           onUpdate={updateRequirement}
                           onDelete={deleteRequirement}
                           isOverGroup={overId === `group-${item.id}`}
+                          overId={overId}
                         />
                       ))}
                     </div>
@@ -1253,14 +1457,14 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
             </div>
 
             {/* Parse Notes and JSON Preview */}
-            <div className="w-96 border-l flex flex-col">
+            <div className="w-[500px] border-l flex flex-col">
               {/* Parse Notes Section */}
               {onParseNotesChange && (
                 <Card className="rounded-none border-0 border-b">
                   <CardHeader className="pl-6 pt-3 pb-2">
                     <CardTitle className="text-lg">Parse Notes</CardTitle>
                   </CardHeader>
-                  <CardContent className="pt-0">
+                  <CardContent className="pt-0 pb-4">
                     <div className="space-y-2">
                       <Textarea
                         placeholder="Add any clarifications, assumptions, or ambiguities..."
@@ -1268,6 +1472,18 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                         onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onParseNotesChange(e.target.value)}
                         className="min-h-[60px] resize-none text-xs"
                       />
+                      {onMarkAmbiguous && (
+                        <div className="flex justify-end">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={onMarkAmbiguous}
+                            className="text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950/20"
+                          >
+                            <AlertTriangle className="w-4 h-4 mr-2"/>Mark as Ambiguous
+                          </Button>
+                        </div>
+                      )}
                       {/* <p className="text-xs text-muted-foreground">
                         {parseNotes.length} characters
                       </p> */}
