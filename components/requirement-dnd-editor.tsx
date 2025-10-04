@@ -47,8 +47,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Save, Download, Trash2, Grip, SkipForward, AlertTriangle, X, AlertCircle, ChevronDown, Check, ChevronsUpDown } from 'lucide-react'
+import { Save, Trash2, Grip, SkipForward, AlertTriangle, X, AlertCircle, ChevronDown, Check, ChevronsUpDown, BookOpen } from 'lucide-react'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { 
   RequirementNode, 
@@ -183,7 +184,6 @@ interface RequirementEditorProps {
   onSave?: (data?: RequirementNode) => void
   onSkip?: () => void
   onSkipToDepartment?: (dept: string) => Promise<void>
-  onExport?: (data: RequirementNode) => void
   onRequirementChange?: (data: RequirementNode | null) => void
   onMarkAmbiguous?: () => void
   loading?: boolean
@@ -762,7 +762,6 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
     onSave, 
     onSkip, 
     onSkipToDepartment,
-    onExport, 
     onRequirementChange, 
     onMarkAmbiguous, 
     loading = false, 
@@ -1107,8 +1106,6 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
     
     onSave?.(currentRequirementJSON || undefined)
   }
-  
-  const handleExport = () => currentRequirementJSON && onExport?.(currentRequirementJSON)
 
   // Parse prerequisite text for auto-suggestions
   const parsedPrerequisites = parsePrerequisiteText(prerequisiteText)
@@ -1375,9 +1372,11 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                 <Button variant="outline" size="sm" onClick={handleClear} disabled={items.length === 0}>
                   <Trash2 className="w-4 h-4 mr-2" />Clear
                 </Button>
-                <Button variant="outline" size="sm" onClick={handleExport} disabled={!completeJSON}>
-                  <Download className="w-4 h-4 mr-2"/>Export JSON
-                </Button>
+                <Link href="/examples" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm">
+                    <BookOpen className="w-4 h-4 mr-2"/>Examples
+                  </Button>
+                </Link>
                 {/* Skip button with department dropdown */}
                 <div className="flex border border-gray-200 rounded-md">
                   <Button 

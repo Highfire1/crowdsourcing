@@ -7,7 +7,7 @@ export default function ExamplesPage() {
   return (
     <main className="min-h-screen">
       <NavHeader />
-      
+
       <div className="max-w-4xl mx-auto p-6 space-y-12">
         {/* Header */}
         <section className="text-center space-y-6">
@@ -20,7 +20,7 @@ export default function ExamplesPage() {
         </section>
 
         {/* Key Rules */}
-        <Card className="border-amber-200 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/20">
+        {/* <Card className="border-amber-200 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-900/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -35,7 +35,7 @@ export default function ExamplesPage() {
               <li>• Time/completion constraints = Other Requirement</li>
             </ul>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Example 1: Co-op Prerequisites */}
         <Card>
@@ -108,6 +108,11 @@ export default function ExamplesPage() {
                   <Badge variant="secondary" className="bg-purple-100 dark:bg-purple-800 text-xs">Other Requirement</Badge>
                   <span className="text-sm">Must be completed within first six terms of the program.</span>
                 </div>
+
+
+              </div>
+              <div className="p-2 border-l-4 border-blue-200 bg-blue-50/50 dark:bg-blue-900/20 text-sm">
+                <strong>Decision:</strong> The second requirement cannot be represented as any other prerequisite type, so we put it under Other Requirement. Technically, this is not a prerequisite, but since it is in the prerequisite field and it is mandatory, we include it.
               </div>
             </div>
 
@@ -145,7 +150,7 @@ export default function ExamplesPage() {
               <ul className="mt-2 ml-4 space-y-1">
                 <li>• Just the 3 lower division units?</li>
                 <li>• Both POL 141 AND the 3 units?</li>
-                <li>• The entire requirement?</li>
+                {/* <li>• The entire requirement?</li> */}
               </ul>
               <strong className="block mt-2">Decision:</strong> Mark as ambiguous - cannot parse definitively without clarification.
             </div>
@@ -221,7 +226,7 @@ export default function ExamplesPage() {
                 Show JSON Structure
               </summary>
               <pre className="mt-3 p-3 rounded border text-xs overflow-auto max-h-64 bg-gray-50 dark:bg-gray-900">
-{`{
+                {`{
   "prerequisites": {
     "type": "group",
     "logic": "ONE_OF",
@@ -258,6 +263,39 @@ export default function ExamplesPage() {
 }`}
               </pre>
             </details>
+          </CardContent>
+        </Card>
+
+        {/* Example 5: Incomplete/Ambiguous Requirements */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Incomplete/Ambiguous Requirements</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-3 border rounded-lg bg-muted/20">
+              <p className="text-sm font-mono">
+                &quot;Completion of 60 units in a science or applied science program, including first year chemistry, physics and calculus. CHEM 230 is strongly recommended.&quot;
+              </p>
+            </div>
+
+            <div className="flex justify-center">
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm text-amber-700 font-medium">Mark as Ambiguous</span>
+              </div>
+            </div>
+
+            <div className="p-2 border-l-4 border-amber-200 bg-amber-50/50 dark:bg-amber-900/20 text-sm">
+              <strong>Problem:</strong> The prerequisites are not fully stated:
+              <ul className="mt-2 ml-4 space-y-1">
+                <li>• Which specific courses qualify as &quot;first year chemistry, physics and calculus?&quot;?</li>
+              </ul>
+              <strong className="block mt-2">Decision:</strong> Mark as ambiguous as parsed prerequisites should be as specific as possible.
+            </div>
           </CardContent>
         </Card>
 
