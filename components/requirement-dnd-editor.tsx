@@ -544,7 +544,7 @@ function RequirementForm({
           <span className="text-sm">Min:</span>
           <input
             type="number"
-            step="0.01"
+            step="0.5"
             value={cgpa.minCGPA}
             onChange={(e) => handleFieldChange('minCGPA', parseFloat(e.target.value))}
             className="px-2 py-1 border rounded text-sm w-20"
@@ -1263,8 +1263,8 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
                     </DraggableSidebarItem>
                     <DraggableSidebarItem
                       id="CGPA"
-                      requirement={{ type: 'CGPA', minCGPA: 2.0 }}
-                      onClick={() => addRequirement('CGPA', { type: 'CGPA', minCGPA: 2.0 })}
+                      requirement={{ type: 'CGPA', minCGPA: 2.5 }}
+                      onClick={() => addRequirement('CGPA', { type: 'CGPA', minCGPA: 2.5 })}
                     >
                       <Button
                         variant="outline"
