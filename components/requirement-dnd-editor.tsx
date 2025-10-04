@@ -1022,21 +1022,23 @@ export function RequirementDndEditor(props: RequirementEditorProps) {
   }
 
   const updateRequirement = (id: string, requirement: RequirementNode) => {
-    setItems(prev => prev.map(item => {
-      if (item.id === id) {
-        return { ...item, requirement }
-      }
-      if (item.requirement.type === 'group') {
-        const groupItem = item as GroupItem
-        return {
-          ...groupItem,
-          children: groupItem.children.map(child => 
-            child.id === id ? { ...child, requirement } : child
-          )
+    const updateRecursively = (items: (RequirementItem | GroupItem)[]): (RequirementItem | GroupItem)[] => {
+      return items.map(item => {
+        if (item.id === id) {
+          return { ...item, requirement }
         }
-      }
-      return item
-    }))
+        if (item.requirement.type === 'group') {
+          const groupItem = item as GroupItem
+          return {
+            ...groupItem,
+            children: updateRecursively(groupItem.children)
+          }
+        }
+        return item
+      })
+    }
+
+    setItems(prev => updateRecursively(prev))
   }
 
   const deleteRequirement = (id: string) => {
