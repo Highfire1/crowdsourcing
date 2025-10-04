@@ -110,6 +110,56 @@ export function parsePrerequisiteText(prerequisiteText: string, corequisiteText?
 
   const seenCourses = new Set<string>()
   
+  // Track courses with explicit grades
+  const courseGrades = new Map<string, string>()
+  let groupGrade: string | null = null
+
+  // Split by grade statements and extract courses that appear before each grade
+  const gradeStatements = combinedText.split(/(?=with\s+(?:a\s+)?minimum\s+grade\s+of\s+[A-Z][+-]?)/gi)
+  
+  for (let i = 0; i < gradeStatements.length; i++) {
+    const statement = gradeStatements[i]
+    
+    // Check if this statement contains a grade
+    const gradeMatch = statement.match(/with\s+(?:a\s+)?minimum\s+grade\s+of\s+([A-Z][+-]?)/i)
+    if (gradeMatch) {
+      const grade = gradeMatch[1]
+      
+      // Get the text before the grade statement
+      const beforeGrade = statement.substring(0, gradeMatch.index)
+      
+      // Also include the previous statement if it doesn't end with a sentence terminator
+      let fullContext = beforeGrade
+      if (i > 0) {
+        const prevStatement = gradeStatements[i - 1]
+        // Check if previous statement flows into this one (no sentence ending)
+        if (!prevStatement.match(/[.!?;]\s*$/)) {
+          fullContext = prevStatement + beforeGrade
+        }
+      }
+      
+      // Extract all courses from the context before this grade
+      const courseMatches = fullContext.matchAll(/\b([A-Z]{2,4})\s+(\d{3}[A-Z]?)\b/g)
+      for (const courseMatch of courseMatches) {
+        const dept = courseMatch[1]
+        const number = courseMatch[2]
+        
+        if (SUBJECTS.includes(dept)) {
+          const courseKey = `${dept} ${number}`
+          if (!courseGrades.has(courseKey)) { // Don't override existing grades
+            courseGrades.set(courseKey, grade)
+          }
+        }
+      }
+    }
+  }
+
+  // Check for group-level grades (like "all with a minimum grade of C-")
+  const groupGradeMatch = combinedText.match(/(?:all|each)\s+with\s+(?:a\s+)?minimum\s+grade\s+of\s+([A-Z][+-]?)/i)
+  if (groupGradeMatch) {
+    groupGrade = groupGradeMatch[1]
+  }
+
   // First pass: Find all explicit DEPT NUMBER patterns (handles cases like "BUSM 360W")
   const explicitCoursePattern = /\b([A-Z]{2,4})\s+(\d{3}[A-Z]?)\b/g
   const explicitMatches = combinedText.matchAll(explicitCoursePattern)
@@ -124,10 +174,26 @@ export function parsePrerequisiteText(prerequisiteText: string, corequisiteText?
       
       if (!seenCourses.has(courseKey)) {
         seenCourses.add(courseKey)
+        
+        // Determine grade: explicit course grade > group grade > none
+        let minGrade: string | undefined
+        if (courseGrades.has(courseKey)) {
+          minGrade = courseGrades.get(courseKey)
+        } else if (groupGrade) {
+          // Only apply group grade if this course appears in a context where group grade makes sense
+          // Check if this course appears before the group grade statement
+          const courseIndex = combinedText.indexOf(courseKey)
+          const groupGradeIndex = combinedText.search(/(?:all|each)\s+with\s+(?:a\s+)?minimum\s+grade\s+of\s+[A-Z][+-]?/i)
+          if (groupGradeIndex > -1 && courseIndex < groupGradeIndex) {
+            minGrade = groupGrade
+          }
+        }
+        
         courses.push({
           type: 'course',
           department: dept,
           number: number,
+          ...(minGrade && { minGrade })
         })
       }
     }
@@ -169,10 +235,26 @@ export function parsePrerequisiteText(prerequisiteText: string, corequisiteText?
           
           if (!hasSubjectBefore) {
             seenCourses.add(courseKey)
+            
+            // Apply grade logic for standalone numbers too
+            let minGrade: string | undefined
+            if (courseGrades.has(courseKey)) {
+              minGrade = courseGrades.get(courseKey)
+            } else if (groupGrade) {
+              // For standalone numbers, be more conservative about applying group grades
+              // Only apply if the group grade appears in the same sentence or shortly after
+              const sentenceIndex = combinedText.indexOf(sentence)
+              const groupGradeIndex = combinedText.search(/(?:all|each)\s+with\s+(?:a\s+)?minimum\s+grade\s+of\s+[A-Z][+-]?/i)
+              if (groupGradeIndex > -1 && groupGradeIndex >= sentenceIndex && groupGradeIndex < sentenceIndex + sentence.length + 100) {
+                minGrade = groupGrade
+              }
+            }
+            
             courses.push({
               type: 'course',
               department: currentSubject,
               number: number,
+              ...(minGrade && { minGrade })
             })
           }
         }
