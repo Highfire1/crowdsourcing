@@ -111,7 +111,7 @@ export default function GuidePage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">OR</Badge>
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">ONE OF</Badge>
                       <span className="text-sm">Any one of:</span>
                     </div>
                     <div className="ml-6 space-y-1">
@@ -161,7 +161,7 @@ export default function GuidePage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">AND</Badge>
+                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">ALL OF</Badge>
                       <span className="text-sm">All of these:</span>
                     </div>
                     <div className="ml-6 space-y-1">
@@ -192,7 +192,7 @@ export default function GuidePage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">AND</Badge>
+                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">ALL OF</Badge>
                       <span className="text-sm">All of these:</span>
                     </div>
                     <div className="ml-6 space-y-1">
@@ -219,7 +219,7 @@ export default function GuidePage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">AND</Badge>
+                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">ALL OF</Badge>
                       <span className="text-sm">All of these:</span>
                     </div>
                     <div className="ml-6 space-y-1">
@@ -246,14 +246,14 @@ export default function GuidePage() {
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">AND</Badge>
+                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700">ALL OF</Badge>
                       <span className="text-sm">All of these:</span>
                     </div>
                     <div className="ml-6 space-y-2">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs">OR</Badge>
-                          <span className="text-sm">Either:</span>
+                          <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs">ONE OF</Badge>
+                          <span className="text-sm">One of these:</span>
                         </div>
                         <div className="ml-6 space-y-1">
                           <div className="flex items-center gap-2">
@@ -262,7 +262,7 @@ export default function GuidePage() {
                           </div>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs">AND</Badge>
+                              <Badge variant="outline" className="bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs">ALL OF</Badge>
                               <span className="text-sm">Both MATH 140 and STAT 200</span>
                             </div>
                             <div className="ml-6 space-y-1">
