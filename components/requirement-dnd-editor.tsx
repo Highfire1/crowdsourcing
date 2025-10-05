@@ -603,6 +603,7 @@ function RequirementForm({
               <option value="2XX">200-level</option>
               <option value="3XX">300-level</option>
               <option value="4XX">400-level</option>
+              <option value="7XX">700-level</option>
               <option value="LD">Lower Division</option>
               <option value="UD">Upper Division</option>
             </select>
@@ -672,6 +673,7 @@ function RequirementForm({
               <option value="2XX">200-level</option>
               <option value="3XX">300-level</option>
               <option value="4XX">400-level</option>
+              <option value="7XX">700-level</option>
               <option value="LD">Lower Division</option>
               <option value="UD">Upper Division</option>
             </select>
