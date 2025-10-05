@@ -1,0 +1,269 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "SFU Course Prerequisites API",
+    "description": "Public API for accessing verified course prerequisite data from the SFU crowdsourcing system.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "SFU Crowdsourcing Team",
+      "url": "https://github.com/Highfire1/crowdsourcing"
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/public",
+      "description": "Public API endpoints"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key for accessing the public endpoints"
+      }
+    },
+    "schemas": {
+      "Course": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique course identifier"
+          },
+          "dept": {
+            "type": "string",
+            "description": "Department code (e.g., CMPT, MATH)",
+            "example": "CMPT"
+          },
+          "number": {
+            "type": "string",
+            "description": "Course number (e.g., 101, 215)",
+            "example": "101"
+          },
+          "title": {
+            "type": "string",
+            "description": "Course title",
+            "example": "Introduction to Computing"
+          },
+          "description": {
+            "type": "string",
+            "description": "Course description"
+          },
+          "prerequisites": {
+            "type": "string",
+            "description": "Original prerequisite text from course catalog"
+          },
+          "corequisites": {
+            "type": "string",
+            "description": "Original corequisite text from course catalog"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional course notes from catalog"
+          },
+          "parse_status": {
+            "type": "string",
+            "description": "Current parsing status",
+            "example": "human_verified"
+          },
+          "parsed_prerequisites": {
+            "type": "object",
+            "description": "Structured prerequisite data (JSON object) - the verified parsed requirements",
+            "nullable": true
+          },
+          "parsed_credit_conflicts": {
+            "type": "object",
+            "description": "Credit exclusion data (JSON object) - courses that conflict with this one",
+            "nullable": true
+          },
+          "verified_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the course was verified",
+            "nullable": true
+          }
+        }
+      },
+      "ExportMetadata": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "SFU Verified Course Prerequisites Export"
+          },
+          "description": {
+            "type": "string"
+          },
+          "exportDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "totalCourses": {
+            "type": "integer",
+            "example": 150
+          },
+          "apiVersion": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "fields": {
+            "type": "object",
+            "description": "Field descriptions for the course data"
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      },
+      "ExportResponse": {
+        "type": "object",
+        "properties": {
+          "metadata": {
+            "$ref": "#/components/schemas/ExportMetadata"
+          },
+          "courses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Course"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "message": {
+            "type": "string",
+            "description": "Detailed error description"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/export-verified-courses": {
+      "get": {
+        "summary": "Export Verified Course Prerequisites",
+        "description": "Returns all courses that have been human-verified through the crowdsourcing system, including structured prerequisite data.",
+        "operationId": "exportVerifiedCourses",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "api_key",
+            "in": "query",
+            "description": "API key (alternative to header)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully exported verified courses",
+            "headers": {
+              "X-Cache": {
+                "description": "Cache status",
+                "schema": {
+                  "type": "string",
+                  "enum": ["HIT", "MISS"]
+                }
+              },
+              "Cache-Control": {
+                "description": "Cache control header",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResponse"
+                },
+                "example": {
+                  "metadata": {
+                    "title": "SFU Verified Course Prerequisites Export",
+                    "description": "This file contains all courses that have been human-verified...",
+                    "exportDate": "2025-10-04T12:00:00.000Z",
+                    "totalCourses": 2,
+                    "apiVersion": "1.0"
+                  },
+                  "courses": [
+                    {
+                      "id": "course_1",
+                      "dept": "CMPT",
+                      "number": "101",
+                      "title": "Introduction to Computing",
+                      "description": "An overview of computing...",
+                      "prerequisites": "None",
+                      "parse_status": "human_verified",
+                      "parsed_prerequisites": null,
+                      "verified_at": "2025-10-04T10:30:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or missing API key",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Invalid or missing API key",
+                  "message": "Please provide a valid API key via x-api-key header or api_key query parameter"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Rate limit exceeded",
+                  "message": "Maximum 10 requests per minute allowed"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Server error: Database connection failed"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
