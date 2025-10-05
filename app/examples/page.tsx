@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { NavHeader } from '@/components/nav-header'
-import { ArrowRight, AlertTriangle } from 'lucide-react'
+import { ArrowRight, AlertTriangle, MessageCircle } from 'lucide-react'
 
 export default function ExamplesPage() {
   return (
@@ -294,10 +294,36 @@ export default function ExamplesPage() {
               <ul className="mt-2 ml-4 space-y-1">
                 <li>• Which specific courses qualify as &quot;first year chemistry, physics and calculus?&quot;?</li>
               </ul>
-              <strong className="block mt-2">Decision:</strong> Mark as ambiguous as parsed prerequisites should be as specific as possible.
+              <strong className="block mt-2">Decision:</strong> Mark as ambiguous because parsed prerequisites should be as specific as possible.
             </div>
           </CardContent>
         </Card>
+
+        {/* Discord Community Card */}
+        <div className="flex justify-center">
+          <a 
+            href="https://discord.gg/BVDvgdVgDf" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="block group max-w-md w-full"
+          >
+            <Card className="hover:shadow-lg transition-all duration-200 border-[#5865F2]/20 dark:border-[#5865F2]/30 hover:border-[#5865F2]/40 dark:hover:border-[#5865F2]/50">
+              <CardContent className="text-center p-6 bg-[#5865F2]/5 dark:bg-[#5865F2]/10">
+                <div className="flex flex-col items-center space-y-4">
+                  <div className="rounded-full bg-[#5865F2]/10 dark:bg-[#5865F2]/20 p-3">
+                    <MessageCircle className="h-8 w-8 text-[#5865F2]" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-[#5865F2]">Need Help with Parsing?</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Join the discord and we will figure it out 👍
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </a>
+        </div>
 
         <div className="pb-24"></div>
       </div>

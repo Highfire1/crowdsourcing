@@ -1,5 +1,6 @@
 import { ParsingDashboard } from "@/components/parsing-dashboard";
 import { NavHeader } from "@/components/nav-header";
+import { MessageCircle } from "lucide-react";
 
 export default function Home() {
   return (
@@ -17,6 +18,28 @@ export default function Home() {
                 </p>
             </div>
             <ParsingDashboard />
+            
+            {/* Discord Card */}
+            <div className="w-full max-w-4xl">
+              <a 
+                href="https://discord.gg/BVDvgdVgDf" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="block group"
+              >
+                <div className="text-center p-6 bg-[#5865F2]/5 dark:bg-[#5865F2]/10 rounded-lg border border-[#5865F2]/20 dark:border-[#5865F2]/30 hover:border-[#5865F2]/40 dark:hover:border-[#5865F2]/50 transition-all duration-200 hover:shadow-lg">
+                  <div className="flex items-center justify-center gap-3 mb-2">
+                    <div className="rounded-full bg-[#5865F2]/10 dark:bg-[#5865F2]/20 p-2">
+                      <MessageCircle className="h-6 w-6 text-[#5865F2]" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-[#5865F2]">Join the Discord</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Come say hi and tell us if you have any questions, suggestions, or feedback :)
+                  </p>
+                </div>
+              </a>
+            </div>
           </div>
         </div>
 

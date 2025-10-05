@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { NavHeader } from '@/components/nav-header'
 import Link from 'next/link'
-import { ArrowRight,  BookOpen, Target, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ArrowRight,  BookOpen, Target, CheckCircle2, AlertCircle, MessageCircle } from 'lucide-react'
 
 export default function GuidePage() {
   return (
@@ -495,6 +495,29 @@ export default function GuidePage() {
                 <ArrowRight className="h-5 w-5 text-green-500 group-hover:translate-x-1 transition-transform" />
               </div>
             </Link>
+          </div>
+
+          {/* Discord Community Card */}
+          <div className="flex justify-center pt-8">
+            <a 
+              href="https://discord.gg/BVDvgdVgDf" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="group relative overflow-hidden rounded-lg border bg-card p-6 hover:shadow-lg transition-all duration-200 max-w-md"
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="rounded-full bg-[#5865F2]/10 dark:bg-[#5865F2]/20 p-3">
+                  <MessageCircle className="h-8 w-8 text-[#5865F2]" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold">Join the Discord!</h3>
+                  {/* <p className="text-sm text-muted-foreground">
+                    Connect with contributors and get support from the community.
+                  </p> */}
+                </div>
+                <ArrowRight className="h-5 w-5 text-[#5865F2] group-hover:translate-x-1 transition-transform" />
+              </div>
+            </a>
           </div>
 
           <div className='pb-24'></div>
