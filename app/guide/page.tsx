@@ -280,7 +280,7 @@ export default function GuidePage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary" className="bg-indigo-100 dark:bg-indigo-800 text-xs">Program</Badge>
-                        <span className="text-sm">CS Program admission</span>
+                        <span className="text-sm">Computer Science</span>
                       </div>
                     </div>
                   </div>
