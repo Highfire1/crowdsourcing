@@ -69,7 +69,9 @@ export default function GuidePage() {
                   <br/>
                   This can be confusing, so read carefully and evaluate all of the options.
                   <br/>
-                  Skip any course prerequisites you aren&apos;t sure about.
+                  For certain fields, you may need to copy the text from the prerequisite text. Do not editorialize or change the meaning.
+                  <br/>
+                  Skip any courses you aren&apos;t sure about, or mark them as ambiguous if they can be interpreted multiple ways.
                 </CardDescription>
               </CardHeader>
               {/* <CardContent className="space-y-4">
@@ -100,59 +102,9 @@ export default function GuidePage() {
                 </CardDescription> */}
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Example 1 */}
+                {/* Example 1: Simple AND - Start with the absolute basics */}
                 <div className="space-y-3">
-                  <h4 className="font-semibold text-sm">Example 1: Simple OR Logic</h4>
-                  <div className="p-3 border rounded-lg bg-muted/20">
-                    <p className="text-sm font-mono">&quot;Six lower division units in political science or permission of the department.&quot;</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">ONE OF</Badge>
-                      <span className="text-sm">Any one of:</span>
-                    </div>
-                    <div className="ml-6 space-y-1">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">Credits</Badge>
-                        <span className="text-sm">6 credits in POL at LD level</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">Permission</Badge>
-                        <span className="text-sm">Department permission</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Example 2: Ambiguous Permission Scope */}
-                <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm">Example 2: Ambiguous Permission Scope</h4>
-                  <div className="p-3 border rounded-lg bg-muted/20">
-                    <p className="text-sm font-mono">&quot;POL 141 and three lower division units in political science or permission of the department.&quot;</p>
-                  </div>
-                  <div className="flex justify-center">
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded">
-                      <AlertCircle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm text-amber-700 font-medium">Mark as Ambiguous</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-6">
-                      It&apos;s unclear what &quot;or permission of the department&quot; applies to:
-                      <br />• Just the 3 lower division units? 
-                      <br />• Both POL 141 AND the 3 units?
-                      <br />• The entire requirement?
-                    </p>
-                  </div>
-                </div>
-
-                {/* Example 3 */}
-                <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm">Example 3: Multiple Course Requirements</h4>
+                  <h4 className="font-semibold text-sm">Example 1: Multiple Course Requirements (AND)</h4>
                   <div className="p-3 border rounded-lg bg-muted/20">
                     <p className="text-sm font-mono">&quot;MATH 140 and MATH 141, and PHYS 121.&quot;</p>
                   </div>
@@ -181,9 +133,36 @@ export default function GuidePage() {
                   </div>
                 </div>
 
-                {/* Example 3 */}
+                {/* Example 2: Simple OR Logic */}
                 <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm">Example 3: GPA and Course Requirements</h4>
+                  <h4 className="font-semibold text-sm">Example 2: Simple OR Logic</h4>
+                  <div className="p-3 border rounded-lg bg-muted/20">
+                    <p className="text-sm font-mono">&quot;Six lower division units in political science or permission of the department.&quot;</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700">ONE OF</Badge>
+                      <span className="text-sm">Any one of:</span>
+                    </div>
+                    <div className="ml-6 space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Credit Count</Badge>
+                        <span className="text-sm">6 credits in POL at LD level</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">Permission</Badge>
+                        <span className="text-sm">Department permission</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Example 3: Adding Grade Requirements */}
+                <div className="space-y-3 border-t pt-4">
+                  <h4 className="font-semibold text-sm">Example 3: Grade &amp; GPA Requirements</h4>
                   <div className="p-3 border rounded-lg bg-muted/20">
                     <p className="text-sm font-mono">&quot;Completion of CS 101 with a grade of C or better and cumulative GPA of 2.5 or higher.&quot;</p>
                   </div>
@@ -208,7 +187,7 @@ export default function GuidePage() {
                   </div>
                 </div>
 
-                {/* Example 4 */}
+                {/* Example 4: Credit Hours */}
                 <div className="space-y-3 border-t pt-4">
                   <h4 className="font-semibold text-sm">Example 4: Credit Hours with Subject Restriction</h4>
                   <div className="p-3 border rounded-lg bg-muted/20">
@@ -235,9 +214,9 @@ export default function GuidePage() {
                   </div>
                 </div>
 
-                {/* Example 5 */}
+                {/* Example 5: Complex Nested Logic */}
                 <div className="space-y-3 border-t pt-4">
-                  <h4 className="font-semibold text-sm">Example 5: Complex Nested Logic</h4>
+                  <h4 className="font-semibold text-sm">Example 5: Complex Nested Logic (Advanced)</h4>
                   <div className="p-3 border rounded-lg bg-muted/20">
                     <p className="text-sm font-mono">&quot;MATH 240 or (MATH 140 and STAT 200), plus admission to the Computer Science program.&quot;</p>
                   </div>
@@ -283,6 +262,31 @@ export default function GuidePage() {
                         <span className="text-sm">Computer Science</span>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Example 6: Ambiguous Cases - End with what to avoid */}
+                <div className="space-y-3 border-t pt-4">
+                  <h4 className="font-semibold text-sm">Example 6: When to mark as ambiguous</h4>
+                  <div className="p-3 border rounded-lg bg-muted/20">
+                    <p className="text-sm font-mono">&quot;POL 141 and three lower division units in political science or permission of the department.&quot;</p>
+                  </div>
+                  <div className="flex justify-center">
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded">
+                      <AlertCircle className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm text-amber-700 font-medium">Mark as Ambiguous</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground ml-6">
+                      It&apos;s unclear what &quot;or permission of the department&quot; applies to:
+                      <br />• Just the 3 lower division units? 
+                      <br />• Both POL 141 AND the 3 units?
+                      <br/>Although one of these interpretations is more likely than the other, the language as given can be interpreted in two different ways, so it should be marked ambiguous.
+                      <br />
+                      (also note that POL 141 would satisfy the 3 lower division units requirement, which is another reason to mark this as ambiguous)
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -399,9 +403,12 @@ export default function GuidePage() {
               <CardHeader>
                 <CardTitle>Verification Options</CardTitle>
                 <CardDescription>
-                  Please read the course description carefully and verify the parsing attempts. 
-                  <br/>
+                  Read the course description carefully and confirm the data that someone else has parsed from a given course. 
+                  <br />
                   You will not be given courses you have parsed yourself.
+                  If you disagree with the parsing, hit the re-parse button and submit your own version.
+                  <br />
+                  Otherwise if the parse looks correct, hit the verify button.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
