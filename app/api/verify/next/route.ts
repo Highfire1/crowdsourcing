@@ -14,57 +14,48 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
     }
 
-    // console.log(`Fetching verification courses at offset: ${offset} for user: ${user.id}`)
+    // Get all courses that need verification and user hasn't parsed
+    // First, get all course dept/number pairs the user has already parsed
+    const { data: userParsedCourses } = await supabase
+      .from('parse_attempts')
+      .select('dept, number')
+      .eq('author', user.id)
 
-    // First get courses that have been successfully parsed by humans
-    const { data: eligibleCourses, error: coursesError, count } = await supabase
+    // Create a set of "dept-number" strings for quick lookup
+    const userParsedSet = new Set(
+      (userParsedCourses || []).map(pa => `${pa.dept}-${pa.number}`)
+    )
+
+    // Get all eligible courses
+    const { data: allEligibleCourses, error: coursesError } = await supabase
       .from('courses_sfu')
-      .select('*', { count: 'exact' })
+      .select('*')
       .eq('parse_status', 'human_parsed_once_success')
       .order('dept', { ascending: true })
       .order('number', { ascending: true })
-      .range(offset, offset)
-    
-    // console.log(eligibleCourses, coursesError, count)
 
     if (coursesError) {
       console.error('Error fetching courses:', coursesError)
       return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 })
     }
 
-    if (!eligibleCourses || eligibleCourses.length === 0) {
+    // Filter out courses user has already parsed (in-memory)
+    const availableCourses = (allEligibleCourses || []).filter(course => 
+      !userParsedSet.has(`${course.dept}-${course.number}`)
+    )
+
+    if (availableCourses.length === 0) {
       return NextResponse.json({
         course: null,
-        offset: offset, // Don't increment when no courses found
-        total: count || 0,
+        offset: 0,
+        total: 0,
         message: 'No more courses available for verification'
       })
     }
 
-    const course = eligibleCourses[0]
-
-    // Check if current user has attempted to parse this course
-    const { data: userParseAttempts, error: userParseError } = await supabase
-      .from('parse_attempts')
-      .select('id')
-      .eq('dept', course.dept)
-      .eq('number', course.number)
-      .eq('author', user.id)
-      .limit(1)
-
-    if (userParseError) {
-      console.error('Error checking user parse attempts:', userParseError)
-      return NextResponse.json({ error: 'Failed to check parse attempts' }, { status: 500 })
-    }
-
-    // If user has parse attempts or course is already verified, skip to next course
-    if ((userParseAttempts && userParseAttempts.length > 0) || course.parse_status === 'human_verified') {
-      // console.log(`Skipping course ${course.dept} ${course.number} - user has parse attempts or already verified`)
-      // Recursively try the next course
-      const nextUrl = new URL(request.url)
-      nextUrl.searchParams.set('offset', (offset + 1).toString())
-      return GET(new Request(nextUrl.toString()))
-    }
+    // Apply offset after filtering
+    const courseIndex = Math.min(offset, availableCourses.length - 1)
+    const course = availableCourses[courseIndex]
 
     // Get all parse attempts for this course
     const { data: parseAttempts, error: parseAttemptsError } = await supabase
@@ -88,8 +79,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       course: courseWithParseAttempts,
-      offset: offset, // Return current offset, don't increment here
-      total: count || 0
+      offset: courseIndex,
+      total: availableCourses.length
     })
 
   } catch (err) {
