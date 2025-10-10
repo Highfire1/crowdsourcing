@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RequirementNode, RequirementGroup, RequirementCourse, RequirementProgram, RequirementPermission, RequirementOther, RequirementCreditCount, RequirementCourseCount, RequirementCGPA, RequirementUDGPA, RequirementHSCourse, CreditConflict } from '@/lib/course_types'
-import { getGroupLogicColor } from '@/lib/prerequisite-parser'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { ChevronDown, ChevronUp, Check } from 'lucide-react'
@@ -37,46 +36,69 @@ interface Props {
 
 // Simple requirement renderer for inline display
 function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNode }) {
-  const renderRequirement = (req: RequirementNode, depth = 0): React.ReactNode => {
-    const indent = depth * 20
+    // Match group colors to /examples with dark/light variants
+    const getLogicClasses = (logic: RequirementGroup['logic']) => {
+        switch (logic) {
+            case 'ALL_OF':
+                return 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700'
+            case 'ONE_OF':
+                return 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
+            case 'TWO_OF':
+            default:
+                return 'bg-purple-50 dark:bg-purple-900 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700'
+        }
+    }
+
+    const joinDept = (dept?: string | string[]) => {
+        if (!dept) return ''
+        return Array.isArray(dept) ? dept.join(', ') : dept
+    }
+
+    const renderRequirement = (req: RequirementNode, left = 0, applyMargin = true): React.ReactNode => {
+        const wrapperStyle = applyMargin ? { marginLeft: left } as React.CSSProperties : undefined
     
     switch (req.type) {
       case 'group':
         const group = req as RequirementGroup
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }}>
+                    <div key={Math.random()} style={wrapperStyle}>
             <div className="flex items-center gap-2 mb-2">
-              <Badge variant="outline" className={`${getGroupLogicColor(group.logic)} border-0 text-xs`}>
-                {group.logic.replace('_', ' ')}
-              </Badge>
+                            <Badge variant="outline" className={`${getLogicClasses(group.logic)} text-xs`}>
+                                {group.logic.replace('_', ' ')}
+                            </Badge>
               <span className="text-sm ">
                 {group.logic === 'ALL_OF' ? 'All of:' : 
                  group.logic === 'ONE_OF' ? 'Any one of:' : 'Any two of:'}
               </span>
             </div>
-            <div className="space-y-1">
-              {group.children.map((child, index) => (
-                <div key={index}>{renderRequirement(child, depth + 1)}</div>
-              ))}
-            </div>
+                        {/* Border line aligned directly next to child content (at left + 20px) */}
+                                                <div className="space-y-2 pl-2 border-l border-border" style={{ marginLeft: 20 }}>
+                            {group.children.map((child, index) => (
+                                <div key={index}>
+                                    {renderRequirement(child as RequirementNode, left + 20, false)}
+                                </div>
+                            ))}
+                        </div>
           </div>
         )
       
       case 'course':
         const course = req as RequirementCourse
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
             <Badge variant="secondary" className="text-xs">Course</Badge>
             <span className="font-mono text-sm">{course.department} {course.number}</span>
-            {course.minGrade && <Badge variant="outline" className="text-xs">Min: {course.minGrade}</Badge>}
+                        {course.minGrade && <Badge variant="outline" className="text-xs">Min: {course.minGrade}</Badge>}
+                        {course.canBeTakenConcurrently && <Badge variant="outline" className="text-xs">Concurrent OK</Badge>}
+                        {course.orEquivalent && <Badge variant="outline" className="text-xs">Or Equivalent</Badge>}
           </div>
         )
       
       case 'program':
         const program = req as RequirementProgram
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">Program</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-indigo-100 dark:bg-indigo-800">Program</Badge>
             <span className="text-sm">{program.program}</span>
           </div>
         )
@@ -84,8 +106,8 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       case 'permission':
         const permission = req as RequirementPermission
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">Permission</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-orange-100 dark:bg-orange-800">Permission</Badge>
             <span className="text-sm">{permission.note}</span>
           </div>
         )
@@ -93,8 +115,8 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       case 'other':
         const other = req as RequirementOther
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">Other</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-purple-100 dark:bg-purple-800">Other</Badge>
             <span className="text-sm">{other.note}</span>
           </div>
         )
@@ -102,36 +124,38 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       case 'creditCount':
         const creditCount = req as RequirementCreditCount
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">Credit Count</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-800">Credits</Badge>
             <span className="text-sm">
-              {creditCount.credits} credits
-              {creditCount.department && ` in ${Array.isArray(creditCount.department) ? creditCount.department.join(', ') : creditCount.department}`}
-              {creditCount.level && ` at ${creditCount.level} level`}
+                            {creditCount.credits} credits
+                            {creditCount.department && ` in ${joinDept(creditCount.department)}`}
+                            {creditCount.level && ` at ${creditCount.level} level`}
             </span>
-            {creditCount.minGrade && <Badge variant="outline" className="text-xs">Min: {creditCount.minGrade}</Badge>}
+                        {creditCount.minGrade && <Badge variant="outline" className="text-xs">Min: {creditCount.minGrade}</Badge>}
+                        {creditCount.canBeTakenConcurrently && <Badge variant="outline" className="text-xs">Concurrent OK</Badge>}
           </div>
         )
       
       case 'courseCount':
         const courseCount = req as RequirementCourseCount
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">Course Count</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-yellow-100 dark:bg-yellow-800">Course Count</Badge>
             <span className="text-sm">
               {courseCount.count} courses
-              {courseCount.department && ` in ${Array.isArray(courseCount.department) ? courseCount.department.join(', ') : courseCount.department}`}
+                            {courseCount.department && ` in ${joinDept(courseCount.department)}`}
               {courseCount.level && ` at ${courseCount.level} level`}
             </span>
-            {courseCount.minGrade && <Badge variant="outline" className="text-xs">Min: {courseCount.minGrade}</Badge>}
+                        {courseCount.minGrade && <Badge variant="outline" className="text-xs">Min: {courseCount.minGrade}</Badge>}
+                        {courseCount.canBeTakenConcurrently && <Badge variant="outline" className="text-xs">Concurrent OK</Badge>}
           </div>
         )
       
       case 'CGPA':
         const cgpa = req as RequirementCGPA
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">CGPA</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-800">CGPA</Badge>
             <span className="text-sm">Minimum CGPA: {cgpa.minCGPA}</span>
           </div>
         )
@@ -139,8 +163,8 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       case 'UDGPA':
         const udgpa = req as RequirementUDGPA
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">UDGPA</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-800">UDGPA</Badge>
             <span className="text-sm">Minimum Upper Division GPA: {udgpa.minUDGPA}</span>
           </div>
         )
@@ -148,8 +172,8 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       case 'HSCourse':
         const hsCourse = req as RequirementHSCourse
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
-            <Badge variant="secondary" className="text-xs">High School</Badge>
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
+                        <Badge variant="secondary" className="text-xs bg-blue-100 dark:bg-blue-800">HS Course</Badge>
             <span className="text-sm">{hsCourse.course}</span>
             {hsCourse.minGrade && <Badge variant="outline" className="text-xs">Min: {hsCourse.minGrade}</Badge>}
             {hsCourse.orEquivalent && <Badge variant="outline" className="text-xs">Or Equivalent</Badge>}
@@ -158,7 +182,7 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
       
       default:
         return (
-          <div key={Math.random()} style={{ marginLeft: indent }} className="flex items-center gap-2 py-1">
+                    <div key={Math.random()} style={wrapperStyle} className="flex items-center gap-2 py-1">
             <Badge variant="secondary" className="text-xs">{(req as RequirementNode).type || 'Unknown'}</Badge>
             <span className="text-sm">Unknown requirement</span>
           </div>
@@ -166,7 +190,7 @@ function SimpleRequirementDisplay({ requirement }: { requirement: RequirementNod
     }
   }
   
-  return <div className="space-y-1">{renderRequirement(requirement)}</div>
+    return <div className="space-y-1">{renderRequirement(requirement, 0, true)}</div>
 }
 
 export default function VerifyPanel({ course, onNextCourse }: Props) {
@@ -333,7 +357,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                 <CardContent className="flex-1 p-0 min-h-0 flex flex-col">
                     {/* Verification controls */}
                     <div className="p-4 border-b space-y-4">
-                        {validParseAttempts.length > 0 && selectedAttemptId && (
+                        {/* {validParseAttempts.length > 0 && selectedAttemptId && (
                             <div className="space-y-2">
                                 <p className="text-sm text-gray-600">
                                     Selected: Parse Attempt #{validParseAttempts.findIndex(a => a.id === selectedAttemptId) !== -1 ? 
@@ -341,7 +365,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                         'Unknown'}
                                 </p>
                             </div>
-                        )}
+                        )} */}
                         
                         {/* Action buttons */}
                         <div className="flex gap-2">
@@ -353,18 +377,18 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                 Skip
                             </Button>
                             <Button 
-                                onClick={verify} 
-                                variant="default"
-                                disabled={loading || !selectedAttemptId || validParseAttempts.length === 0}
-                            >
-                                {loading ? 'Submitting...' : 'Verify Selected Parse'}
-                            </Button>
-                            <Button 
                                 onClick={redirectToParse} 
                                 variant="destructive"
                                 disabled={loading}
                             >
                                 Reparse Course
+                            </Button>
+                            <Button 
+                                onClick={verify} 
+                                variant="default"
+                                disabled={loading || !selectedAttemptId || validParseAttempts.length === 0}
+                            >
+                                {loading ? 'Submitting...' : 'Verify Selected Parse'}
                             </Button>
                         </div>
                     </div>
@@ -431,7 +455,7 @@ export default function VerifyPanel({ course, onNextCourse }: Props) {
                                             <div className="mb-4">
                                                 <h4 className="text-sm font-semibold mb-2">Parse Notes:</h4>
                                                 {attempt.parse_notes ? (
-                                                    <div className="p-3 rounded border bg-blue-50">
+                                                    <div className="p-3 rounded border ">
                                                         <p className="text-sm whitespace-pre-wrap">{attempt.parse_notes}</p>
                                                     </div>
                                                 ) : (

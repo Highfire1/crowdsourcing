@@ -62,7 +62,10 @@ export default function ParsePanel({ course, onNextCourse, onSkipToDepartment }:
         ))
     }
 
-    const submit = async (parsed?: RequirementNode | null, parseStatus: 'success' | 'ambiguous' = 'success') => {
+    const submit = async (
+        parsed: RequirementNode | null | undefined,
+        status: 'success' | 'ambiguous'
+    ) => {
         if (!currentCourse) return
         setLoading(true)
 
@@ -75,7 +78,7 @@ export default function ParsePanel({ course, onNextCourse, onSkipToDepartment }:
                     parsed: parsed ?? currentParsed,
                     action: 'submit',
                     parseNotes: parseNotes.trim() || null,
-                    parseStatus: parseStatus,
+                    parseStatus: status,
                     parsedCreditConflicts: creditConflicts.length > 0 ? creditConflicts : null,
                 }),
             })
@@ -99,7 +102,7 @@ export default function ParsePanel({ course, onNextCourse, onSkipToDepartment }:
                 showErrorToast(errorMessage)
             } else {
                 const courseName = `${currentCourse.dept} ${currentCourse.number}`
-                toast.success(parseStatus === 'ambiguous' 
+                toast.success(status === 'ambiguous' 
                     ? `${courseName} marked as ambiguous` 
                     : `${courseName} submitted successfully`)
                 

@@ -60,22 +60,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Failed to insert parse_attempts', details: insertErr }, { status: 500 })
     }
 
-    // Update parse_status when submitted, but only if currently ai_parsed or ai_parsed_failed
+    // Update parse_status when submitted
     if (action === 'submit') {
-      if (course.parse_status === 'ai_parsed' || course.parse_status === 'ai_parsed_failed') {
-        // Set course status based on parse_status
-        let newCourseStatus = 'human_parsed_once_success'
-        if (parseStatus === 'ambiguous') {
-          newCourseStatus = 'human_parsed_unclear'
-        }
-
+      // Ambiguous should always mark unclear, regardless of prior status
+      if (parseStatus === 'ambiguous') {
         const { error: updateErr } = await supabase
           .from('courses_sfu')
-          .update({ parse_status: newCourseStatus })
+          .update({ parse_status: 'human_parsed_unclear' })
           .eq('id', courseId)
 
         if (updateErr) {
-          console.error('Error updating parse_status:', updateErr)
+          console.error('Error updating parse_status (ambiguous):', updateErr)
+          return NextResponse.json({ error: 'Failed to update parse_status' }, { status: 500 })
+        }
+      } else if (course.parse_status === 'ai_parsed' || course.parse_status === 'ai_parsed_failed') {
+        // Only promote to success from AI states
+        const { error: updateErr } = await supabase
+          .from('courses_sfu')
+          .update({ parse_status: 'human_parsed_once_success' })
+          .eq('id', courseId)
+
+        if (updateErr) {
+          console.error('Error updating parse_status (success):', updateErr)
           return NextResponse.json({ error: 'Failed to update parse_status' }, { status: 500 })
         }
       }
