@@ -4,6 +4,8 @@ import { ThemeProvider } from "next-themes";
 import { ToastProvider } from "@/components/toast-provider";
 import "./globals.css";
 
+import { Analytics } from "@vercel/analytics/next"
+
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
@@ -37,6 +39,7 @@ export default function RootLayout({
           {children}
           <ToastProvider />
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
