@@ -4,8 +4,8 @@ const openApiSpec = {
   "openapi": "3.0.3",
   "info": {
     "title": "SFU Course Prerequisites API",
-    "description": "Public API for accessing verified course prerequisite data from the SFU crowdsourcing system.",
-    "version": "1.0.0",
+    "description": "Public API for accessing course prerequisite data from the SFU crowdsourcing system. Includes all courses with a status field indicating whether they have been parsed or not.",
+    "version": "2.0.0",
     "contact": {
       "name": "SFU Crowdsourcing Team",
       "url": "https://github.com/Highfire1/crowdsourcing"
@@ -72,23 +72,29 @@ const openApiSpec = {
           },
           "parse_status": {
             "type": "string",
-            "description": "Current parsing status",
+            "description": "Internal parsing status (ai_parsed, human_verified, no_parse_needed, etc.)",
             "example": "human_verified"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["parsed", "unparsed"],
+            "description": "Simple status indicator: 'parsed' (has verified/parsed data) or 'unparsed' (not yet parsed)",
+            "example": "parsed"
           },
           "parsed_prerequisites": {
             "type": "object",
-            "description": "Structured prerequisite data (JSON object) - the verified parsed requirements",
+            "description": "Structured prerequisite data (JSON object) - null for unparsed courses",
             "nullable": true
           },
           "parsed_credit_conflicts": {
             "type": "object",
-            "description": "Credit exclusion data (JSON object) - courses that conflict with this one",
+            "description": "Credit exclusion data (JSON object) - null for unparsed courses",
             "nullable": true
           },
           "verified_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp when the course was verified",
+            "description": "Timestamp when the course was verified (null if not verified)",
             "nullable": true
           }
         }
@@ -113,7 +119,7 @@ const openApiSpec = {
           },
           "apiVersion": {
             "type": "string",
-            "example": "1.0"
+            "example": "2.0"
           },
           "fields": {
             "type": "object",
@@ -156,8 +162,8 @@ const openApiSpec = {
   "paths": {
     "/export-verified-courses": {
       "get": {
-        "summary": "Export Verified Course Prerequisites",
-        "description": "Returns all courses that have been human-verified through the crowdsourcing system, including structured prerequisite data.",
+        "summary": "Export All Course Prerequisites",
+        "description": "Returns ALL SFU courses with prerequisite information. Each course has a 'status' field indicating whether it has been parsed ('parsed') or not yet parsed ('unparsed'). Unparsed courses include basic information but have null parsed data.",
         "operationId": "exportVerifiedCourses",
         "security": [
           {
@@ -177,7 +183,7 @@ const openApiSpec = {
         ],
         "responses": {
           "200": {
-            "description": "Successfully exported verified courses",
+            "description": "Successfully exported all courses",
             "headers": {
               "X-Cache": {
                 "description": "Cache status",
@@ -200,11 +206,11 @@ const openApiSpec = {
                 },
                 "example": {
                   "metadata": {
-                    "title": "SFU Verified Course Prerequisites Export",
-                    "description": "This file contains all courses that have been human-verified...",
-                    "exportDate": "2025-10-04T12:00:00.000Z",
-                    "totalCourses": 2,
-                    "apiVersion": "1.0"
+                    "title": "SFU Course Prerequisites Export",
+                    "description": "This file contains ALL SFU courses...",
+                    "exportDate": "2025-10-14T12:00:00.000Z",
+                    "totalCourses": 1500,
+                    "apiVersion": "2.0"
                   },
                   "courses": [
                     {
@@ -214,9 +220,28 @@ const openApiSpec = {
                       "title": "Introduction to Computing",
                       "description": "An overview of computing...",
                       "prerequisites": "None",
+                      "corequisites": "",
+                      "notes": "",
                       "parse_status": "human_verified",
+                      "status": "parsed",
                       "parsed_prerequisites": null,
-                      "verified_at": "2025-10-04T10:30:00.000Z"
+                      "parsed_credit_conflicts": null,
+                      "verified_at": "2025-10-14T10:30:00.000Z"
+                    },
+                    {
+                      "id": "course_2",
+                      "dept": "MATH",
+                      "number": "308",
+                      "title": "Linear Optimization",
+                      "description": "Linear programming...",
+                      "prerequisites": "MATH 232 or 240",
+                      "corequisites": "",
+                      "notes": "",
+                      "parse_status": "ai_parsed",
+                      "status": "unparsed",
+                      "parsed_prerequisites": null,
+                      "parsed_credit_conflicts": null,
+                      "verified_at": null
                     }
                   ]
                 }

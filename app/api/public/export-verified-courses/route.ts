@@ -12,6 +12,7 @@ interface ExportCourse {
   corequisites: string
   notes: string
   parse_status: string
+  status: 'parsed' | 'unparsed' // New field to indicate if course has been parsed
   parsed_prerequisites: object | null
   parsed_credit_conflicts: object | null
   verified_at: string | null
@@ -92,22 +93,43 @@ async function fetchVerifiedCourses(): Promise<ExportCourse[]> {
   )
 
   try {
-    // First, get all verified courses and those marked as no-parse-needed (no prerequisites)
-    const { data: verifiedCourses, error: coursesError } = await supabase
+    // Get ALL courses from the database
+    const { data: allCourses, error: coursesError } = await supabase
       .from('courses_sfu')
       .select('*')
-      .in('parse_status', ['human_verified', 'no_parse_needed'])
       .order('dept', { ascending: true })
       .order('number', { ascending: true })
 
     if (coursesError) {
-      console.error('Error fetching verified courses:', coursesError)
-      throw new Error('Failed to fetch verified courses')
+      console.error('Error fetching courses:', coursesError)
+      throw new Error('Failed to fetch courses')
     }
 
-    // For each verified course, get the verification record and associated parse attempt
+    // For each course, get the verification record and associated parse attempt
     const processedCourses = await Promise.all(
-      verifiedCourses.map(async (course: ExportCourse) => {
+      allCourses.map(async (course: ExportCourse) => {
+        // Determine if this course has been parsed or not
+        const isParsed = ['human_verified', 'no_parse_needed', 'human_parsed_once_success'].includes(course.parse_status)
+        
+        // For unparsed courses, return minimal data
+        if (!isParsed) {
+          return {
+            id: course.id,
+            dept: course.dept,
+            number: course.number,
+            title: course.title,
+            description: course.description,
+            prerequisites: course.prerequisites,
+            corequisites: course.corequisites,
+            notes: course.notes,
+            parse_status: course.parse_status,
+            status: 'unparsed' as const,
+            parsed_prerequisites: null,
+            parsed_credit_conflicts: null,
+            verified_at: null
+          }
+        }
+
         // First try to get the verification record for this course
         const { data: verifications, error: verificationError } = await supabase
           .from('verifications_sfu')
@@ -172,6 +194,7 @@ async function fetchVerifiedCourses(): Promise<ExportCourse[]> {
             corequisites: course.corequisites,
             notes: course.notes,
             parse_status: course.parse_status,
+            status: 'parsed' as const,
             // Include the parsed data from the most recent successful parse attempt
             parsed_prerequisites: directParseAttempt?.parsed_prerequisites || null,
             parsed_credit_conflicts: directParseAttempt?.parsed_credit_conflicts || null,
@@ -189,6 +212,7 @@ async function fetchVerifiedCourses(): Promise<ExportCourse[]> {
           corequisites: course.corequisites,
           notes: course.notes,
           parse_status: course.parse_status,
+          status: 'parsed' as const,
           // Include the parsed data from the verified parse attempt
           parsed_prerequisites: parseAttempt?.parsed_prerequisites || null,
           parsed_credit_conflicts: parseAttempt?.parsed_credit_conflicts || null,
@@ -254,10 +278,10 @@ export async function GET(request: NextRequest) {
     const exportData = {
       metadata: {
   title: "SFU Course Prerequisites Export",
-  description: "This file contains courses that have been human-verified through the crowdsourcing system, plus courses with no prerequisites (marked as no-parse-needed). Each course includes the original prerequisite/corequisite text and any parsed/structured prerequisite data if available.",
+  description: "This file contains ALL SFU courses. Courses are marked with a 'status' field as either 'parsed' (verified or has parsed data) or 'unparsed' (not yet parsed). Unparsed courses include basic information but have null parsed data.",
         exportDate: new Date().toISOString(),
         totalCourses: processedCourses.length,
-        apiVersion: "1.1",
+        apiVersion: "2.0",
         fields: {
           id: "Unique course identifier",
           dept: "Department code (e.g., CMPT, MATH)",
@@ -267,12 +291,13 @@ export async function GET(request: NextRequest) {
           prerequisites: "Original prerequisite text from course catalog",
           corequisites: "Original corequisite text from course catalog", 
           notes: "Additional course notes from catalog",
-          parse_status: "Current parsing status (typically 'human_verified' or 'no_parse_needed')",
-          parsed_prerequisites: "Structured prerequisite data (JSON object) - the verified parsed requirements (null for no-parse-needed)",
-          parsed_credit_conflicts: "Credit exclusion data (JSON object) - courses that conflict with this one",
-          verified_at: "Timestamp when the course was verified (from verification table)"
+          parse_status: "Internal parsing status (ai_parsed, human_verified, no_parse_needed, etc.)",
+          status: "'parsed' (has verified/parsed data) or 'unparsed' (not yet parsed)",
+          parsed_prerequisites: "Structured prerequisite data (JSON object) - null for unparsed courses",
+          parsed_credit_conflicts: "Credit exclusion data (JSON object) - null for unparsed courses",
+          verified_at: "Timestamp when the course was verified (null if not verified)"
         },
-        note: "The parsed_prerequisites field contains structured data representing course requirements. For 'human_verified' entries, the data has been verified by human reviewers. For 'no_parse_needed' entries, prerequisites are not applicable and parsed_prerequisites will be null."
+        note: "The 'status' field is the main indicator: 'parsed' courses have human-verified or parsed data available, while 'unparsed' courses are awaiting parsing. The parsed_prerequisites field contains structured requirement data for parsed courses only."
       },
       courses: processedCourses
     }

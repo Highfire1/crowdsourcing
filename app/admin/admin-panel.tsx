@@ -10,7 +10,6 @@ export default function AdminPanel() {
   const [result, setResult] = useState<string | null>(null)
   const [parseAttemptsLoading, setParseAttemptsLoading] = useState(false)
   const [parseAttemptsResult, setParseAttemptsResult] = useState<string | null>(null)
-  const [exportLoading, setExportLoading] = useState(false)
 
   const runUpdate = async () => {
     setLoading(true)
@@ -50,34 +49,6 @@ export default function AdminPanel() {
     }
   }
 
-  const exportVerifiedCourses = async () => {
-    setExportLoading(true)
-
-    try {
-      const res = await fetch('/api/admin/export-verified-courses', { method: 'GET' })
-      
-      if (!res.ok) {
-        throw new Error(`Export failed: ${res.status}`)
-      }
-
-      // Get the blob and create download
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `sfu-verified-courses-${new Date().toISOString().split('T')[0]}.json`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (err: unknown) {
-      console.error('Export error:', err)
-      alert(`Export failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
-    } finally {
-      setExportLoading(false)
-    }
-  }
-
   return (
     <div className="space-y-6">
       <Card>
@@ -113,22 +84,6 @@ export default function AdminPanel() {
             {parseAttemptsResult && (
               <pre className="text-xs p-2 rounded border max-h-48 overflow-auto bg-muted text-muted-foreground">{parseAttemptsResult}</pre>
             )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Export Verified Courses</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">Export all human-verified courses as a JSON file. The file includes metadata about the export and structured prerequisite data.</p>
-          <p className="mb-4 text-sm text-muted-foreground">File will be downloaded with filename: sfu-verified-courses-[date].json</p>
-
-          <div className="flex items-center gap-4">
-            <Button onClick={exportVerifiedCourses} disabled={exportLoading}>
-              {exportLoading ? 'Exporting…' : "Export Verified Courses"}
-            </Button>
           </div>
         </CardContent>
       </Card>
