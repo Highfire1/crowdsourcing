@@ -18,7 +18,7 @@ export default async function AccountPage() {
 
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) {
-    redirect("/auth/login");
+    redirect("/auth/signin");
   }
 
   const user = data.claims;

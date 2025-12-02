@@ -27,7 +27,7 @@ export default function AuthCodeErrorPage() {
               </p>
               <div className="flex flex-col gap-2">
                 <Button asChild className="w-full">
-                  <Link href="/auth/login">Try Again</Link>
+                  <Link href="/auth/signin">Try Again</Link>
                 </Button>
                 <Button asChild variant="outline" className="w-full">
                   <Link href="/">Go Home</Link>

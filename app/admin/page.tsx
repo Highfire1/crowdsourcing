@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
   if (error || !data?.user) {
     // not authenticated
-    redirect('/auth/login')
+    redirect('/auth/signin')
   }
 
   const user = data.user

@@ -77,10 +77,10 @@ export function SignUpUserSteps() {
         <p>
           Head over to the{" "}
           <Link
-            href="auth/sign-up"
+            href="auth/signin"
             className="font-bold hover:underline text-foreground/80"
           >
-            Sign up
+            Sign in
           </Link>{" "}
           page and sign up your first user. It&apos;s okay if this is just you
           for now. Your awesome idea will have plenty of users later!
